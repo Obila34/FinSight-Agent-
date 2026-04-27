@@ -20,8 +20,6 @@ from agents.forecaster import (
     get_forecast_summary,
     check_budget_alerts,
 )
-from agents.rag_engine import FinanceRAGEngine
-
 logger = logging.getLogger(__name__)
 
 _INTENT_PATTERNS: list[tuple[str, list[tuple[str, float]]]] = [
@@ -82,7 +80,7 @@ _RESULT_CACHE: dict[str, dict[str, Any]] = {}
 
 _CONVERSATION_HISTORY: deque[dict[str, Any]] = deque(maxlen=80)
 _GRAPH: Any = None
-_RAG_ENGINE: FinanceRAGEngine | None = None
+_RAG_ENGINE: Any = None
 _CLASSIFIED_DF: pd.DataFrame | None = None
 
 _CIRCUIT_FAILURES: defaultdict[str, int] = defaultdict(int)
@@ -119,9 +117,11 @@ def _load_classified_df() -> pd.DataFrame:
     return _CLASSIFIED_DF
 
 
-def _get_rag_engine() -> FinanceRAGEngine:
+def _get_rag_engine() -> Any:
     global _RAG_ENGINE
     if _RAG_ENGINE is None:
+        from agents.rag_engine import FinanceRAGEngine
+
         _RAG_ENGINE = FinanceRAGEngine(data_path="data/classified_transactions.csv")
     return _RAG_ENGINE
 
@@ -426,6 +426,7 @@ def _compose_response(state: dict[str, Any]) -> dict[str, Any]:
         "answer_quality_score": quality,
         "source_citations": all_citations,
         "proactive_alert": alert,
+        "session_summary": summary_prefix,
     }
 
     state["final_answer"] = combined

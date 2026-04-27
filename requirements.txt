@@ -1,4 +1,5 @@
 pandas
+statsmodels
 faker
 plaid-python
 transformers
