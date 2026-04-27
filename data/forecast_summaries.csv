@@ -1,0 +1,5 @@
+category,forecast_days,total_predicted_spend,avg_daily_spend,max_daily_spend,min_daily_spend
+Food,30,64032.45,2134.42,2955.76,1461.51
+Transport,30,17065.2,568.84,620.89,497.3
+Entertainment,30,41622.22,1387.41,1688.64,1076.96
+Shopping,30,156908.83,5230.29,6521.71,2426.13

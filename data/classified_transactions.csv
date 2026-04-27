@@ -1,0 +1,599 @@
+date,merchant,amount,category,month,month_name,day_of_week,week,predicted_category,confidence_score
+2025-10-28,Naivas Supermarket,1815.65,Food,10,October,Tuesday,44,Shopping,0.6576
+2025-10-28,Java House,834.49,Food,10,October,Tuesday,44,Entertainment,0.3309
+2025-10-28,Subway Westgate,2182.54,Food,10,October,Tuesday,44,Transport,0.7026
+2025-10-29,Mr Price,4273.41,Shopping,10,October,Wednesday,44,Rent,0.369
+2025-10-29,Zara Village Market,5658.92,Shopping,10,October,Wednesday,44,Shopping,0.5475
+2025-10-29,Showmax,1006.13,Entertainment,10,October,Wednesday,44,Entertainment,0.6353
+2025-10-29,Bolt,542.04,Transport,10,October,Wednesday,44,Transport,0.2811
+2025-10-30,Haltons Pharmacy,2191.55,Health,10,October,Thursday,44,Health,0.4947
+2025-10-30,Dstv,1332.94,Entertainment,10,October,Thursday,44,Transport,0.3038
+2025-10-31,Nairobi Water,961.64,Utilities,10,October,Friday,44,Utilities,0.9514
+2025-10-31,Mama Oliech,571.69,Food,10,October,Friday,44,Entertainment,0.2993
+2025-11-01,Subway Westgate,1344.95,Food,11,November,Saturday,44,Transport,0.7026
+2025-11-01,Haltons Pharmacy,3695.76,Health,11,November,Saturday,44,Health,0.4947
+2025-11-01,Shell Petrol,274.84,Transport,11,November,Saturday,44,Rent,0.2081
+2025-11-01,Kenya Bus,752.18,Transport,11,November,Saturday,44,Transport,0.9455
+2025-11-02,Airtel Kenya,3142.05,Utilities,11,November,Sunday,44,Entertainment,0.3026
+2025-11-02,Kfc Nairobi,300.46,Food,11,November,Sunday,44,Transport,0.2237
+2025-11-03,Java House,408.33,Food,11,November,Monday,45,Entertainment,0.3309
+2025-11-04,Steam,754.79,Entertainment,11,November,Tuesday,45,Entertainment,0.3143
+2025-11-04,Nike Town,962.97,Shopping,11,November,Tuesday,45,Entertainment,0.5341
+2025-11-04,Kenya Bus,452.16,Transport,11,November,Tuesday,45,Transport,0.9455
+2025-11-05,Shell Petrol,402.43,Transport,11,November,Wednesday,45,Rent,0.2081
+2025-11-05,Naivas Supermarket,688.01,Food,11,November,Wednesday,45,Shopping,0.6576
+2025-11-05,Nairobi Hospital,6351.16,Health,11,November,Wednesday,45,Health,0.9826
+2025-11-05,Carrefour,387.11,Food,11,November,Wednesday,45,Shopping,0.4168
+2025-11-06,Goodlife Pharmacy,1290.26,Health,11,November,Thursday,45,Health,0.849
+2025-11-06,Carrefour,1048.97,Food,11,November,Thursday,45,Shopping,0.4168
+2025-11-06,Aar Clinic,4374.19,Health,11,November,Thursday,45,Health,0.7828
+2025-11-06,Imax Westgate,854.09,Entertainment,11,November,Thursday,45,Entertainment,0.7791
+2025-11-06,Haltons Pharmacy,7004.59,Health,11,November,Thursday,45,Health,0.4947
+2025-11-07,Showmax,815.74,Entertainment,11,November,Friday,45,Entertainment,0.6353
+2025-11-07,Kenya Power,2286.82,Utilities,11,November,Friday,45,Utilities,0.8926
+2025-11-07,Chicken Inn,976.14,Food,11,November,Friday,45,Food,0.882
+2025-11-07,Kfc Nairobi,1510.46,Food,11,November,Friday,45,Transport,0.2237
+2025-11-07,Kenya Bus,779.15,Transport,11,November,Friday,45,Transport,0.9455
+2025-11-08,Artcaffe,2273.05,Food,11,November,Saturday,45,Entertainment,0.4274
+2025-11-08,Kfc Nairobi,2371.73,Food,11,November,Saturday,45,Transport,0.2237
+2025-11-08,Mama Oliech,1568.76,Food,11,November,Saturday,45,Entertainment,0.2993
+2025-11-09,Total Energies,577.46,Transport,11,November,Sunday,45,Utilities,0.4979
+2025-11-09,Kfc Nairobi,481.06,Food,11,November,Sunday,45,Transport,0.2237
+2025-11-09,Kfc Nairobi,822.36,Food,11,November,Sunday,45,Transport,0.2237
+2025-11-10,Safaricom,4428.51,Utilities,11,November,Monday,46,Entertainment,0.2268
+2025-11-10,Rent Payment,34138.34,Rent,11,November,Monday,46,Rent,0.968
+2025-11-10,Nairobi Water,4406.41,Utilities,11,November,Monday,46,Utilities,0.9514
+2025-11-10,Kilimall,3654.58,Shopping,11,November,Monday,46,Entertainment,0.2543
+2025-11-10,Matatu Fare,697.88,Transport,11,November,Monday,46,Transport,0.8891
+2025-11-10,Netflix,509.1,Entertainment,11,November,Monday,46,Entertainment,0.6502
+2025-11-10,Woolworths,7142.8,Shopping,11,November,Monday,46,Shopping,0.4354
+2025-11-11,Kilimall,8373.06,Shopping,11,November,Tuesday,46,Entertainment,0.2543
+2025-11-11,Subway Westgate,2463.45,Food,11,November,Tuesday,46,Transport,0.7026
+2025-11-11,Artcaffe,661.6,Food,11,November,Tuesday,46,Entertainment,0.4274
+2025-11-11,Showmax,819.14,Entertainment,11,November,Tuesday,46,Entertainment,0.6353
+2025-11-13,Bank Transfer,6844.48,Other,11,November,Thursday,46,Other,0.1956
+2025-11-13,Subway Westgate,959.64,Food,11,November,Thursday,46,Transport,0.7026
+2025-11-13,Subway Westgate,1386.3,Food,11,November,Thursday,46,Transport,0.7026
+2025-11-13,Java House,1810.08,Food,11,November,Thursday,46,Entertainment,0.3309
+2025-11-14,Carrefour,2150.65,Food,11,November,Friday,46,Shopping,0.4168
+2025-11-14,Showmax,1419.91,Entertainment,11,November,Friday,46,Entertainment,0.6353
+2025-11-14,Mama Oliech,676.92,Food,11,November,Friday,46,Entertainment,0.2993
+2025-11-14,Netflix,1421.5,Entertainment,11,November,Friday,46,Entertainment,0.6502
+2025-11-14,Haltons Pharmacy,471.43,Health,11,November,Friday,46,Health,0.4947
+2025-11-15,Subway Westgate,848.97,Food,11,November,Saturday,46,Transport,0.7026
+2025-11-15,Carrefour,1091.66,Food,11,November,Saturday,46,Shopping,0.4168
+2025-11-15,Mama Oliech,2333.19,Food,11,November,Saturday,46,Entertainment,0.2993
+2025-11-17,Kilimall,2454.81,Shopping,11,November,Monday,47,Entertainment,0.2543
+2025-11-17,Total Energies,348.11,Transport,11,November,Monday,47,Utilities,0.4979
+2025-11-17,Kfc Nairobi,1966.71,Food,11,November,Monday,47,Transport,0.2237
+2025-11-17,Mama Oliech,704.08,Food,11,November,Monday,47,Entertainment,0.2993
+2025-11-17,Zara Village Market,1345.14,Shopping,11,November,Monday,47,Shopping,0.5475
+2025-11-18,Zara Village Market,1272.03,Shopping,11,November,Tuesday,47,Shopping,0.5475
+2025-11-18,Kenya Bus,439.46,Transport,11,November,Tuesday,47,Transport,0.9455
+2025-11-19,Kfc Nairobi,2102.22,Food,11,November,Wednesday,47,Transport,0.2237
+2025-11-19,Total Energies,94.37,Transport,11,November,Wednesday,47,Utilities,0.4979
+2025-11-19,Nairobi Water,2818.76,Utilities,11,November,Wednesday,47,Utilities,0.9514
+2025-11-20,Artcaffe,330.32,Food,11,November,Thursday,47,Entertainment,0.4274
+2025-11-20,Subway Westgate,224.69,Food,11,November,Thursday,47,Transport,0.7026
+2025-11-20,Kenya Bus,418.79,Transport,11,November,Thursday,47,Transport,0.9455
+2025-11-21,Jumia,1979.63,Shopping,11,November,Friday,47,Entertainment,0.3662
+2025-11-21,Mama Oliech,304.89,Food,11,November,Friday,47,Entertainment,0.2993
+2025-11-22,Artcaffe,2134.41,Food,11,November,Saturday,47,Entertainment,0.4274
+2025-11-22,Uber,289.01,Transport,11,November,Saturday,47,Transport,0.4922
+2025-11-22,Mama Oliech,1835.79,Food,11,November,Saturday,47,Entertainment,0.2993
+2025-11-22,Dstv,698.39,Entertainment,11,November,Saturday,47,Transport,0.3038
+2025-11-22,M-Pesa Send Money,1358.6,Other,11,November,Saturday,47,Transport,0.2993
+2025-11-23,Nairobi Hospital,4525.42,Health,11,November,Sunday,47,Health,0.9826
+2025-11-23,M-Pesa Send Money,3468.26,Other,11,November,Sunday,47,Transport,0.2993
+2025-11-24,Kilimall,11594.29,Shopping,11,November,Monday,48,Entertainment,0.2543
+2025-11-24,Nairobi Hospital,4386.19,Health,11,November,Monday,48,Health,0.9826
+2025-11-24,Atm Withdrawal,5322.98,Other,11,November,Monday,48,Utilities,0.5879
+2025-11-25,Carrefour,961.16,Food,11,November,Tuesday,48,Shopping,0.4168
+2025-11-25,Nairobi Water,1727.77,Utilities,11,November,Tuesday,48,Utilities,0.9514
+2025-11-25,Spotify,973.09,Entertainment,11,November,Tuesday,48,Entertainment,0.7264
+2025-11-25,Jumia,11048.31,Shopping,11,November,Tuesday,48,Entertainment,0.3662
+2025-11-25,Netflix,1206.94,Entertainment,11,November,Tuesday,48,Entertainment,0.6502
+2025-11-26,Kilimall,7467.77,Shopping,11,November,Wednesday,48,Entertainment,0.2543
+2025-11-26,Java House,1262.87,Food,11,November,Wednesday,48,Entertainment,0.3309
+2025-11-26,Subway Westgate,369.04,Food,11,November,Wednesday,48,Transport,0.7026
+2025-11-27,Bolt,96.59,Transport,11,November,Thursday,48,Transport,0.2811
+2025-11-27,Matatu Fare,735.16,Transport,11,November,Thursday,48,Transport,0.8891
+2025-11-27,Nike Town,7404.73,Shopping,11,November,Thursday,48,Entertainment,0.5341
+2025-11-28,Artcaffe,708.45,Food,11,November,Friday,48,Entertainment,0.4274
+2025-11-28,Matatu Fare,256.91,Transport,11,November,Friday,48,Transport,0.8891
+2025-11-28,Rent Payment,34901.62,Rent,11,November,Friday,48,Rent,0.968
+2025-11-28,Imax Westgate,590.09,Entertainment,11,November,Friday,48,Entertainment,0.7791
+2025-11-29,Airtel Kenya,3946.25,Utilities,11,November,Saturday,48,Entertainment,0.3026
+2025-11-29,Bank Transfer,9665.83,Other,11,November,Saturday,48,Other,0.1956
+2025-11-30,Matatu Fare,181.73,Transport,11,November,Sunday,48,Transport,0.8891
+2025-11-30,M-Pesa Send Money,6790.28,Other,11,November,Sunday,48,Transport,0.2993
+2025-11-30,Kenya Power,515.96,Utilities,11,November,Sunday,48,Utilities,0.8926
+2025-12-01,Rent Payment,43167.9,Rent,12,December,Monday,49,Rent,0.968
+2025-12-01,Spotify,1367.11,Entertainment,12,December,Monday,49,Entertainment,0.7264
+2025-12-02,Uber,83.98,Transport,12,December,Tuesday,49,Transport,0.4922
+2025-12-02,Rent Payment,20760.16,Rent,12,December,Tuesday,49,Rent,0.968
+2025-12-02,Artcaffe,2371.51,Food,12,December,Tuesday,49,Entertainment,0.4274
+2025-12-02,Zuku Fibre,4061.21,Utilities,12,December,Tuesday,49,Entertainment,0.3237
+2025-12-02,Chicken Inn,1785.77,Food,12,December,Tuesday,49,Food,0.882
+2025-12-02,Nairobi Water,2128.98,Utilities,12,December,Tuesday,49,Utilities,0.9514
+2025-12-02,Uber,188.59,Transport,12,December,Tuesday,49,Transport,0.4922
+2025-12-02,Kenya Bus,107.66,Transport,12,December,Tuesday,49,Transport,0.9455
+2025-12-02,Netflix,1482.16,Entertainment,12,December,Tuesday,49,Entertainment,0.6502
+2025-12-03,Java House,2284.77,Food,12,December,Wednesday,49,Entertainment,0.3309
+2025-12-03,Nairobi Water,4833.02,Utilities,12,December,Wednesday,49,Utilities,0.9514
+2025-12-03,Kenya Bus,219.01,Transport,12,December,Wednesday,49,Transport,0.9455
+2025-12-03,Safaricom,1857.94,Utilities,12,December,Wednesday,49,Entertainment,0.2268
+2025-12-04,Aar Clinic,6491.19,Health,12,December,Thursday,49,Health,0.7828
+2025-12-05,Zara Village Market,6472.33,Shopping,12,December,Friday,49,Shopping,0.5475
+2025-12-05,Kfc Nairobi,1495.85,Food,12,December,Friday,49,Transport,0.2237
+2025-12-05,Shell Petrol,110.43,Transport,12,December,Friday,49,Rent,0.2081
+2025-12-05,Rent Payment,22677.72,Rent,12,December,Friday,49,Rent,0.968
+2025-12-05,Steam,364.33,Entertainment,12,December,Friday,49,Entertainment,0.3143
+2025-12-06,Uber,535.78,Transport,12,December,Saturday,49,Transport,0.4922
+2025-12-06,Carrefour,1894.68,Food,12,December,Saturday,49,Shopping,0.4168
+2025-12-06,Little Cab,330.73,Transport,12,December,Saturday,49,Transport,0.6053
+2025-12-06,Subway Westgate,2438.52,Food,12,December,Saturday,49,Transport,0.7026
+2025-12-06,Haltons Pharmacy,4781.25,Health,12,December,Saturday,49,Health,0.4947
+2025-12-07,Imax Westgate,1369.6,Entertainment,12,December,Sunday,49,Entertainment,0.7791
+2025-12-07,Subway Westgate,1216.07,Food,12,December,Sunday,49,Transport,0.7026
+2025-12-07,Naivas Supermarket,1933.2,Food,12,December,Sunday,49,Shopping,0.6576
+2025-12-07,Nairobi Hospital,5351.34,Health,12,December,Sunday,49,Health,0.9826
+2025-12-08,Aar Clinic,3116.53,Health,12,December,Monday,50,Health,0.7828
+2025-12-09,Airtel Kenya,4140.7,Utilities,12,December,Tuesday,50,Entertainment,0.3026
+2025-12-09,Airtel Kenya,1188.57,Utilities,12,December,Tuesday,50,Entertainment,0.3026
+2025-12-10,Goodlife Pharmacy,4120.07,Health,12,December,Wednesday,50,Health,0.849
+2025-12-10,Haltons Pharmacy,6391.14,Health,12,December,Wednesday,50,Health,0.4947
+2025-12-10,Kilimall,4330.29,Shopping,12,December,Wednesday,50,Entertainment,0.2543
+2025-12-11,Atm Withdrawal,5293.22,Other,12,December,Thursday,50,Utilities,0.5879
+2025-12-12,Rent Payment,40938.17,Rent,12,December,Friday,50,Rent,0.968
+2025-12-12,Rent Payment,27536.55,Rent,12,December,Friday,50,Rent,0.968
+2025-12-13,Jumia,5451.98,Shopping,12,December,Saturday,50,Entertainment,0.3662
+2025-12-13,Subway Westgate,512.49,Food,12,December,Saturday,50,Transport,0.7026
+2025-12-14,Aar Clinic,4651.18,Health,12,December,Sunday,50,Health,0.7828
+2025-12-14,Carrefour,210.9,Food,12,December,Sunday,50,Shopping,0.4168
+2025-12-15,Haltons Pharmacy,3423.33,Health,12,December,Monday,51,Health,0.4947
+2025-12-15,Kenya Power,1618.95,Utilities,12,December,Monday,51,Utilities,0.8926
+2025-12-15,Mama Oliech,514.54,Food,12,December,Monday,51,Entertainment,0.2993
+2025-12-15,Nairobi Hospital,1908.24,Health,12,December,Monday,51,Health,0.9826
+2025-12-16,Artcaffe,2454.2,Food,12,December,Tuesday,51,Entertainment,0.4274
+2025-12-16,Carrefour,1396.92,Food,12,December,Tuesday,51,Shopping,0.4168
+2025-12-17,Zara Village Market,10221.0,Shopping,12,December,Wednesday,51,Shopping,0.5475
+2025-12-18,Spotify,1459.52,Entertainment,12,December,Thursday,51,Entertainment,0.7264
+2025-12-18,Kfc Nairobi,252.94,Food,12,December,Thursday,51,Transport,0.2237
+2025-12-19,Bolt,359.72,Transport,12,December,Friday,51,Transport,0.2811
+2025-12-19,Java House,1999.4,Food,12,December,Friday,51,Entertainment,0.3309
+2025-12-19,Kfc Nairobi,1836.39,Food,12,December,Friday,51,Transport,0.2237
+2025-12-19,Chicken Inn,423.16,Food,12,December,Friday,51,Food,0.882
+2025-12-20,Carrefour,2376.84,Food,12,December,Saturday,51,Shopping,0.4168
+2025-12-21,Carrefour,322.16,Food,12,December,Sunday,51,Shopping,0.4168
+2025-12-21,Artcaffe,1804.49,Food,12,December,Sunday,51,Entertainment,0.4274
+2025-12-21,Little Cab,186.38,Transport,12,December,Sunday,51,Transport,0.6053
+2025-12-21,Rent Payment,17750.2,Rent,12,December,Sunday,51,Rent,0.968
+2025-12-22,Mr Price,3695.52,Shopping,12,December,Monday,52,Rent,0.369
+2025-12-22,Airtel Kenya,3743.78,Utilities,12,December,Monday,52,Entertainment,0.3026
+2025-12-23,Rent Payment,26026.32,Rent,12,December,Tuesday,52,Rent,0.968
+2025-12-23,Mama Oliech,2300.85,Food,12,December,Tuesday,52,Entertainment,0.2993
+2025-12-23,Kenya Power,4002.89,Utilities,12,December,Tuesday,52,Utilities,0.8926
+2025-12-23,Subway Westgate,365.53,Food,12,December,Tuesday,52,Transport,0.7026
+2025-12-24,Subway Westgate,1392.78,Food,12,December,Wednesday,52,Transport,0.7026
+2025-12-24,Kenya Bus,258.93,Transport,12,December,Wednesday,52,Transport,0.9455
+2025-12-25,Kenya Bus,646.51,Transport,12,December,Thursday,52,Transport,0.9455
+2025-12-25,Zuku Fibre,3990.83,Utilities,12,December,Thursday,52,Entertainment,0.3237
+2025-12-25,Haltons Pharmacy,4349.08,Health,12,December,Thursday,52,Health,0.4947
+2025-12-26,Kfc Nairobi,1528.0,Food,12,December,Friday,52,Transport,0.2237
+2025-12-26,Naivas Supermarket,1095.32,Food,12,December,Friday,52,Shopping,0.6576
+2025-12-27,Mama Oliech,2006.46,Food,12,December,Saturday,52,Entertainment,0.2993
+2025-12-27,Goodlife Pharmacy,6583.7,Health,12,December,Saturday,52,Health,0.849
+2025-12-27,Matatu Fare,137.09,Transport,12,December,Saturday,52,Transport,0.8891
+2025-12-27,Atm Withdrawal,9705.46,Other,12,December,Saturday,52,Utilities,0.5879
+2025-12-28,Haltons Pharmacy,5033.74,Health,12,December,Sunday,52,Health,0.4947
+2025-12-28,Rent Payment,44423.24,Rent,12,December,Sunday,52,Rent,0.968
+2025-12-28,Zuku Fibre,1577.54,Utilities,12,December,Sunday,52,Entertainment,0.3237
+2025-12-29,Kfc Nairobi,1100.34,Food,12,December,Monday,1,Transport,0.2237
+2025-12-29,Chicken Inn,2453.57,Food,12,December,Monday,1,Food,0.882
+2025-12-29,Aar Clinic,4366.29,Health,12,December,Monday,1,Health,0.7828
+2025-12-29,Goodlife Pharmacy,5984.09,Health,12,December,Monday,1,Health,0.849
+2025-12-30,Zuku Fibre,883.31,Utilities,12,December,Tuesday,1,Entertainment,0.3237
+2025-12-30,Chicken Inn,268.01,Food,12,December,Tuesday,1,Food,0.882
+2025-12-30,Zara Village Market,9725.7,Shopping,12,December,Tuesday,1,Shopping,0.5475
+2025-12-30,Chicken Inn,601.82,Food,12,December,Tuesday,1,Food,0.882
+2025-12-31,Kenya Bus,457.27,Transport,12,December,Wednesday,1,Transport,0.9455
+2025-12-31,Subway Westgate,2455.44,Food,12,December,Wednesday,1,Transport,0.7026
+2025-12-31,Mr Price,6312.2,Shopping,12,December,Wednesday,1,Rent,0.369
+2026-01-01,Showmax,858.04,Entertainment,1,January,Thursday,1,Entertainment,0.6353
+2026-01-01,Showmax,766.1,Entertainment,1,January,Thursday,1,Entertainment,0.6353
+2026-01-01,Safaricom,962.62,Utilities,1,January,Thursday,1,Entertainment,0.2268
+2026-01-01,Total Energies,394.19,Transport,1,January,Thursday,1,Utilities,0.4979
+2026-01-02,Chicken Inn,577.06,Food,1,January,Friday,1,Food,0.882
+2026-01-03,Atm Withdrawal,4960.16,Other,1,January,Saturday,1,Utilities,0.5879
+2026-01-03,Matatu Fare,52.43,Transport,1,January,Saturday,1,Transport,0.8891
+2026-01-03,Artcaffe,569.63,Food,1,January,Saturday,1,Entertainment,0.4274
+2026-01-03,Total Energies,394.14,Transport,1,January,Saturday,1,Utilities,0.4979
+2026-01-05,Artcaffe,1794.37,Food,1,January,Monday,2,Entertainment,0.4274
+2026-01-05,Kilimall,6114.64,Shopping,1,January,Monday,2,Entertainment,0.2543
+2026-01-05,Total Energies,264.3,Transport,1,January,Monday,2,Utilities,0.4979
+2026-01-05,Mr Price,6604.8,Shopping,1,January,Monday,2,Rent,0.369
+2026-01-05,Shell Petrol,381.53,Transport,1,January,Monday,2,Rent,0.2081
+2026-01-05,Zuku Fibre,630.29,Utilities,1,January,Monday,2,Entertainment,0.3237
+2026-01-06,Matatu Fare,311.6,Transport,1,January,Tuesday,2,Transport,0.8891
+2026-01-06,Bolt,99.26,Transport,1,January,Tuesday,2,Transport,0.2811
+2026-01-06,Showmax,1336.83,Entertainment,1,January,Tuesday,2,Entertainment,0.6353
+2026-01-06,Chicken Inn,1622.86,Food,1,January,Tuesday,2,Food,0.882
+2026-01-07,Kenya Power,2813.7,Utilities,1,January,Wednesday,2,Utilities,0.8926
+2026-01-07,Spotify,677.26,Entertainment,1,January,Wednesday,2,Entertainment,0.7264
+2026-01-07,Showmax,806.26,Entertainment,1,January,Wednesday,2,Entertainment,0.6353
+2026-01-07,Kfc Nairobi,1086.4,Food,1,January,Wednesday,2,Transport,0.2237
+2026-01-08,Showmax,736.68,Entertainment,1,January,Thursday,2,Entertainment,0.6353
+2026-01-08,Woolworths,10288.41,Shopping,1,January,Thursday,2,Shopping,0.4354
+2026-01-09,Safaricom,1807.04,Utilities,1,January,Friday,2,Entertainment,0.2268
+2026-01-09,Aar Clinic,5123.06,Health,1,January,Friday,2,Health,0.7828
+2026-01-09,Kenya Bus,50.3,Transport,1,January,Friday,2,Transport,0.9455
+2026-01-09,Bolt,616.93,Transport,1,January,Friday,2,Transport,0.2811
+2026-01-10,Kilimall,11271.0,Shopping,1,January,Saturday,2,Entertainment,0.2543
+2026-01-10,Netflix,468.16,Entertainment,1,January,Saturday,2,Entertainment,0.6502
+2026-01-11,Steam,457.69,Entertainment,1,January,Sunday,2,Entertainment,0.3143
+2026-01-11,Jumia,8971.11,Shopping,1,January,Sunday,2,Entertainment,0.3662
+2026-01-11,Nike Town,4412.02,Shopping,1,January,Sunday,2,Entertainment,0.5341
+2026-01-12,Steam,1280.52,Entertainment,1,January,Monday,3,Entertainment,0.3143
+2026-01-12,Artcaffe,678.44,Food,1,January,Monday,3,Entertainment,0.4274
+2026-01-12,Matatu Fare,792.96,Transport,1,January,Monday,3,Transport,0.8891
+2026-01-12,M-Pesa Send Money,2599.91,Other,1,January,Monday,3,Transport,0.2993
+2026-01-12,Naivas Supermarket,814.67,Food,1,January,Monday,3,Shopping,0.6576
+2026-01-12,Uber,757.06,Transport,1,January,Monday,3,Transport,0.4922
+2026-01-13,Artcaffe,2391.98,Food,1,January,Tuesday,3,Entertainment,0.4274
+2026-01-13,Haltons Pharmacy,7293.22,Health,1,January,Tuesday,3,Health,0.4947
+2026-01-13,Aar Clinic,5001.02,Health,1,January,Tuesday,3,Health,0.7828
+2026-01-13,Bank Transfer,1689.12,Other,1,January,Tuesday,3,Other,0.1956
+2026-01-14,Total Energies,390.31,Transport,1,January,Wednesday,3,Utilities,0.4979
+2026-01-14,Bank Transfer,5238.22,Other,1,January,Wednesday,3,Other,0.1956
+2026-01-14,Chicken Inn,1388.3,Food,1,January,Wednesday,3,Food,0.882
+2026-01-15,Java House,2304.35,Food,1,January,Thursday,3,Entertainment,0.3309
+2026-01-15,Uber,346.83,Transport,1,January,Thursday,3,Transport,0.4922
+2026-01-16,Imax Westgate,545.11,Entertainment,1,January,Friday,3,Entertainment,0.7791
+2026-01-16,Dstv,373.15,Entertainment,1,January,Friday,3,Transport,0.3038
+2026-01-16,Subway Westgate,962.36,Food,1,January,Friday,3,Transport,0.7026
+2026-01-16,Matatu Fare,740.87,Transport,1,January,Friday,3,Transport,0.8891
+2026-01-16,Little Cab,505.0,Transport,1,January,Friday,3,Transport,0.6053
+2026-01-16,Carrefour,1845.02,Food,1,January,Friday,3,Shopping,0.4168
+2026-01-17,Airtel Kenya,2210.04,Utilities,1,January,Saturday,3,Entertainment,0.3026
+2026-01-17,Woolworths,1348.13,Shopping,1,January,Saturday,3,Shopping,0.4354
+2026-01-18,Carrefour,889.12,Food,1,January,Sunday,3,Shopping,0.4168
+2026-01-19,Imax Westgate,423.12,Entertainment,1,January,Monday,4,Entertainment,0.7791
+2026-01-19,Uber,353.77,Transport,1,January,Monday,4,Transport,0.4922
+2026-01-21,Goodlife Pharmacy,594.51,Health,1,January,Wednesday,4,Health,0.849
+2026-01-21,M-Pesa Send Money,8796.16,Other,1,January,Wednesday,4,Transport,0.2993
+2026-01-21,Carrefour,1963.03,Food,1,January,Wednesday,4,Shopping,0.4168
+2026-01-21,Kenya Power,1307.12,Utilities,1,January,Wednesday,4,Utilities,0.8926
+2026-01-22,Bolt,391.02,Transport,1,January,Thursday,4,Transport,0.2811
+2026-01-22,Goodlife Pharmacy,672.78,Health,1,January,Thursday,4,Health,0.849
+2026-01-22,Bank Transfer,7592.31,Other,1,January,Thursday,4,Other,0.1956
+2026-01-23,Netflix,840.63,Entertainment,1,January,Friday,4,Entertainment,0.6502
+2026-01-23,Bolt,763.38,Transport,1,January,Friday,4,Transport,0.2811
+2026-01-23,Spotify,874.46,Entertainment,1,January,Friday,4,Entertainment,0.7264
+2026-01-24,Netflix,830.08,Entertainment,1,January,Saturday,4,Entertainment,0.6502
+2026-01-24,Nairobi Water,2923.61,Utilities,1,January,Saturday,4,Utilities,0.9514
+2026-01-24,Woolworths,9500.31,Shopping,1,January,Saturday,4,Shopping,0.4354
+2026-01-24,Zuku Fibre,3803.9,Utilities,1,January,Saturday,4,Entertainment,0.3237
+2026-01-24,Mr Price,9567.98,Shopping,1,January,Saturday,4,Rent,0.369
+2026-01-25,M-Pesa Send Money,1763.4,Other,1,January,Sunday,4,Transport,0.2993
+2026-01-25,Mr Price,11097.68,Shopping,1,January,Sunday,4,Rent,0.369
+2026-01-26,Carrefour,1698.61,Food,1,January,Monday,5,Shopping,0.4168
+2026-01-26,Bolt,211.36,Transport,1,January,Monday,5,Transport,0.2811
+2026-01-26,Nairobi Hospital,1468.7,Health,1,January,Monday,5,Health,0.9826
+2026-01-26,Nairobi Hospital,4813.07,Health,1,January,Monday,5,Health,0.9826
+2026-01-26,Steam,446.68,Entertainment,1,January,Monday,5,Entertainment,0.3143
+2026-01-28,Nike Town,7833.55,Shopping,1,January,Wednesday,5,Entertainment,0.5341
+2026-01-28,Chicken Inn,2383.8,Food,1,January,Wednesday,5,Food,0.882
+2026-01-28,Goodlife Pharmacy,4283.18,Health,1,January,Wednesday,5,Health,0.849
+2026-01-28,Chicken Inn,2105.26,Food,1,January,Wednesday,5,Food,0.882
+2026-01-28,Uber,133.9,Transport,1,January,Wednesday,5,Transport,0.4922
+2026-01-30,Little Cab,74.54,Transport,1,January,Friday,5,Transport,0.6053
+2026-01-30,Java House,1745.8,Food,1,January,Friday,5,Entertainment,0.3309
+2026-01-30,Java House,1432.14,Food,1,January,Friday,5,Entertainment,0.3309
+2026-01-30,Safaricom,2248.91,Utilities,1,January,Friday,5,Entertainment,0.2268
+2026-01-30,Zuku Fibre,1729.47,Utilities,1,January,Friday,5,Entertainment,0.3237
+2026-01-30,Carrefour,2317.23,Food,1,January,Friday,5,Shopping,0.4168
+2026-01-31,Uber,270.03,Transport,1,January,Saturday,5,Transport,0.4922
+2026-01-31,Carrefour,1899.78,Food,1,January,Saturday,5,Shopping,0.4168
+2026-02-01,Woolworths,1935.5,Shopping,2,February,Sunday,5,Shopping,0.4354
+2026-02-01,Netflix,671.5,Entertainment,2,February,Sunday,5,Entertainment,0.6502
+2026-02-01,Imax Westgate,990.96,Entertainment,2,February,Sunday,5,Entertainment,0.7791
+2026-02-02,Bank Transfer,1471.0,Other,2,February,Monday,6,Other,0.1956
+2026-02-02,Bank Transfer,7809.67,Other,2,February,Monday,6,Other,0.1956
+2026-02-02,Subway Westgate,1712.58,Food,2,February,Monday,6,Transport,0.7026
+2026-02-02,Matatu Fare,181.77,Transport,2,February,Monday,6,Transport,0.8891
+2026-02-02,Bank Transfer,9932.14,Other,2,February,Monday,6,Other,0.1956
+2026-02-02,Chicken Inn,1807.29,Food,2,February,Monday,6,Food,0.882
+2026-02-02,Bank Transfer,1513.21,Other,2,February,Monday,6,Other,0.1956
+2026-02-03,Bolt,55.12,Transport,2,February,Tuesday,6,Transport,0.2811
+2026-02-03,Matatu Fare,607.48,Transport,2,February,Tuesday,6,Transport,0.8891
+2026-02-04,Rent Payment,26369.19,Rent,2,February,Wednesday,6,Rent,0.968
+2026-02-06,Carrefour,304.51,Food,2,February,Friday,6,Shopping,0.4168
+2026-02-06,Nairobi Hospital,5841.58,Health,2,February,Friday,6,Health,0.9826
+2026-02-06,Subway Westgate,2255.04,Food,2,February,Friday,6,Transport,0.7026
+2026-02-06,M-Pesa Send Money,3974.86,Other,2,February,Friday,6,Transport,0.2993
+2026-02-06,Rent Payment,44915.15,Rent,2,February,Friday,6,Rent,0.968
+2026-02-07,Chicken Inn,1281.19,Food,2,February,Saturday,6,Food,0.882
+2026-02-07,Java House,1480.85,Food,2,February,Saturday,6,Entertainment,0.3309
+2026-02-07,Naivas Supermarket,2041.86,Food,2,February,Saturday,6,Shopping,0.6576
+2026-02-08,Little Cab,595.63,Transport,2,February,Sunday,6,Transport,0.6053
+2026-02-08,Steam,1334.18,Entertainment,2,February,Sunday,6,Entertainment,0.3143
+2026-02-09,Bank Transfer,801.48,Other,2,February,Monday,7,Other,0.1956
+2026-02-09,Rent Payment,22240.68,Rent,2,February,Monday,7,Rent,0.968
+2026-02-09,Carrefour,517.85,Food,2,February,Monday,7,Shopping,0.4168
+2026-02-09,Nairobi Hospital,5631.21,Health,2,February,Monday,7,Health,0.9826
+2026-02-09,Showmax,1241.54,Entertainment,2,February,Monday,7,Entertainment,0.6353
+2026-02-10,M-Pesa Send Money,5047.32,Other,2,February,Tuesday,7,Transport,0.2993
+2026-02-10,Showmax,1327.22,Entertainment,2,February,Tuesday,7,Entertainment,0.6353
+2026-02-11,Kenya Power,3030.74,Utilities,2,February,Wednesday,7,Utilities,0.8926
+2026-02-11,Little Cab,456.96,Transport,2,February,Wednesday,7,Transport,0.6053
+2026-02-11,Zuku Fibre,4687.12,Utilities,2,February,Wednesday,7,Entertainment,0.3237
+2026-02-11,Total Energies,132.2,Transport,2,February,Wednesday,7,Utilities,0.4979
+2026-02-12,Subway Westgate,2180.79,Food,2,February,Thursday,7,Transport,0.7026
+2026-02-12,Zara Village Market,3699.95,Shopping,2,February,Thursday,7,Shopping,0.5475
+2026-02-13,Steam,1030.66,Entertainment,2,February,Friday,7,Entertainment,0.3143
+2026-02-13,Rent Payment,17768.95,Rent,2,February,Friday,7,Rent,0.968
+2026-02-13,Java House,2011.39,Food,2,February,Friday,7,Entertainment,0.3309
+2026-02-13,Bank Transfer,6569.92,Other,2,February,Friday,7,Other,0.1956
+2026-02-14,Artcaffe,1905.48,Food,2,February,Saturday,7,Entertainment,0.4274
+2026-02-14,Java House,1621.08,Food,2,February,Saturday,7,Entertainment,0.3309
+2026-02-14,Nairobi Hospital,3678.14,Health,2,February,Saturday,7,Health,0.9826
+2026-02-14,Total Energies,121.31,Transport,2,February,Saturday,7,Utilities,0.4979
+2026-02-14,Netflix,400.74,Entertainment,2,February,Saturday,7,Entertainment,0.6502
+2026-02-15,Spotify,906.66,Entertainment,2,February,Sunday,7,Entertainment,0.7264
+2026-02-16,Mr Price,7570.79,Shopping,2,February,Monday,8,Rent,0.369
+2026-02-17,Woolworths,11093.71,Shopping,2,February,Tuesday,8,Shopping,0.4354
+2026-02-17,Carrefour,598.34,Food,2,February,Tuesday,8,Shopping,0.4168
+2026-02-17,Zuku Fibre,1782.44,Utilities,2,February,Tuesday,8,Entertainment,0.3237
+2026-02-18,Kenya Bus,742.45,Transport,2,February,Wednesday,8,Transport,0.9455
+2026-02-18,Nairobi Hospital,1460.34,Health,2,February,Wednesday,8,Health,0.9826
+2026-02-18,Atm Withdrawal,3790.45,Other,2,February,Wednesday,8,Utilities,0.5879
+2026-02-18,Mama Oliech,1242.72,Food,2,February,Wednesday,8,Entertainment,0.2993
+2026-02-18,Nairobi Hospital,7610.31,Health,2,February,Wednesday,8,Health,0.9826
+2026-02-18,Subway Westgate,1208.71,Food,2,February,Wednesday,8,Transport,0.7026
+2026-02-18,Nike Town,10534.66,Shopping,2,February,Wednesday,8,Entertainment,0.5341
+2026-02-18,Matatu Fare,101.21,Transport,2,February,Wednesday,8,Transport,0.8891
+2026-02-19,Zara Village Market,7521.85,Shopping,2,February,Thursday,8,Shopping,0.5475
+2026-02-20,M-Pesa Send Money,9010.83,Other,2,February,Friday,8,Transport,0.2993
+2026-02-20,Haltons Pharmacy,7216.99,Health,2,February,Friday,8,Health,0.4947
+2026-02-20,Java House,2154.14,Food,2,February,Friday,8,Entertainment,0.3309
+2026-02-21,Kenya Bus,457.57,Transport,2,February,Saturday,8,Transport,0.9455
+2026-02-21,Nairobi Water,948.7,Utilities,2,February,Saturday,8,Utilities,0.9514
+2026-02-21,Java House,1273.73,Food,2,February,Saturday,8,Entertainment,0.3309
+2026-02-21,Bolt,360.36,Transport,2,February,Saturday,8,Transport,0.2811
+2026-02-21,Artcaffe,1802.02,Food,2,February,Saturday,8,Entertainment,0.4274
+2026-02-21,Kenya Power,2210.57,Utilities,2,February,Saturday,8,Utilities,0.8926
+2026-02-22,Nike Town,6496.69,Shopping,2,February,Sunday,8,Entertainment,0.5341
+2026-02-22,Imax Westgate,1448.02,Entertainment,2,February,Sunday,8,Entertainment,0.7791
+2026-02-22,Mama Oliech,1643.62,Food,2,February,Sunday,8,Entertainment,0.2993
+2026-02-22,Safaricom,1398.08,Utilities,2,February,Sunday,8,Entertainment,0.2268
+2026-02-22,Aar Clinic,692.18,Health,2,February,Sunday,8,Health,0.7828
+2026-02-23,Rent Payment,28693.85,Rent,2,February,Monday,9,Rent,0.968
+2026-02-23,Shell Petrol,157.34,Transport,2,February,Monday,9,Rent,0.2081
+2026-02-23,Kenya Power,4903.21,Utilities,2,February,Monday,9,Utilities,0.8926
+2026-02-23,Chicken Inn,723.08,Food,2,February,Monday,9,Food,0.882
+2026-02-23,Shell Petrol,93.3,Transport,2,February,Monday,9,Rent,0.2081
+2026-02-24,Haltons Pharmacy,5848.61,Health,2,February,Tuesday,9,Health,0.4947
+2026-02-24,Spotify,757.94,Entertainment,2,February,Tuesday,9,Entertainment,0.7264
+2026-02-25,Rent Payment,35245.1,Rent,2,February,Wednesday,9,Rent,0.968
+2026-02-25,Kenya Bus,508.61,Transport,2,February,Wednesday,9,Transport,0.9455
+2026-02-25,Kfc Nairobi,877.25,Food,2,February,Wednesday,9,Transport,0.2237
+2026-02-25,Naivas Supermarket,1067.57,Food,2,February,Wednesday,9,Shopping,0.6576
+2026-02-26,Bolt,607.74,Transport,2,February,Thursday,9,Transport,0.2811
+2026-02-26,Atm Withdrawal,4365.62,Other,2,February,Thursday,9,Utilities,0.5879
+2026-02-26,Kenya Bus,230.24,Transport,2,February,Thursday,9,Transport,0.9455
+2026-02-26,Rent Payment,24645.8,Rent,2,February,Thursday,9,Rent,0.968
+2026-02-27,Chicken Inn,2454.93,Food,2,February,Friday,9,Food,0.882
+2026-02-27,Goodlife Pharmacy,674.44,Health,2,February,Friday,9,Health,0.849
+2026-02-27,Naivas Supermarket,743.32,Food,2,February,Friday,9,Shopping,0.6576
+2026-02-27,Mama Oliech,2495.59,Food,2,February,Friday,9,Entertainment,0.2993
+2026-02-28,Showmax,485.68,Entertainment,2,February,Saturday,9,Entertainment,0.6353
+2026-02-28,Java House,600.12,Food,2,February,Saturday,9,Entertainment,0.3309
+2026-02-28,Steam,1447.98,Entertainment,2,February,Saturday,9,Entertainment,0.3143
+2026-02-28,Kilimall,5555.46,Shopping,2,February,Saturday,9,Entertainment,0.2543
+2026-02-28,Zuku Fibre,4613.22,Utilities,2,February,Saturday,9,Entertainment,0.3237
+2026-03-01,M-Pesa Send Money,6787.78,Other,3,March,Sunday,9,Transport,0.2993
+2026-03-01,Kenya Power,885.44,Utilities,3,March,Sunday,9,Utilities,0.8926
+2026-03-02,Airtel Kenya,4995.06,Utilities,3,March,Monday,10,Entertainment,0.3026
+2026-03-02,Bank Transfer,7092.82,Other,3,March,Monday,10,Other,0.1956
+2026-03-02,Nairobi Water,3587.44,Utilities,3,March,Monday,10,Utilities,0.9514
+2026-03-02,Goodlife Pharmacy,6826.69,Health,3,March,Monday,10,Health,0.849
+2026-03-03,Steam,1135.63,Entertainment,3,March,Tuesday,10,Entertainment,0.3143
+2026-03-04,Kilimall,9275.9,Shopping,3,March,Wednesday,10,Entertainment,0.2543
+2026-03-04,Bolt,422.15,Transport,3,March,Wednesday,10,Transport,0.2811
+2026-03-04,Kenya Power,4597.78,Utilities,3,March,Wednesday,10,Utilities,0.8926
+2026-03-04,Uber,677.52,Transport,3,March,Wednesday,10,Transport,0.4922
+2026-03-04,Zuku Fibre,1456.82,Utilities,3,March,Wednesday,10,Entertainment,0.3237
+2026-03-05,Bolt,354.06,Transport,3,March,Thursday,10,Transport,0.2811
+2026-03-06,Zara Village Market,4408.57,Shopping,3,March,Friday,10,Shopping,0.5475
+2026-03-06,Zuku Fibre,4287.51,Utilities,3,March,Friday,10,Entertainment,0.3237
+2026-03-06,Steam,744.69,Entertainment,3,March,Friday,10,Entertainment,0.3143
+2026-03-06,Uber,758.92,Transport,3,March,Friday,10,Transport,0.4922
+2026-03-06,Artcaffe,322.8,Food,3,March,Friday,10,Entertainment,0.4274
+2026-03-07,Zuku Fibre,2080.16,Utilities,3,March,Saturday,10,Entertainment,0.3237
+2026-03-07,Zara Village Market,1545.83,Shopping,3,March,Saturday,10,Shopping,0.5475
+2026-03-07,Rent Payment,20971.74,Rent,3,March,Saturday,10,Rent,0.968
+2026-03-08,Atm Withdrawal,7726.32,Other,3,March,Sunday,10,Utilities,0.5879
+2026-03-08,Zuku Fibre,4700.17,Utilities,3,March,Sunday,10,Entertainment,0.3237
+2026-03-08,Java House,791.06,Food,3,March,Sunday,10,Entertainment,0.3309
+2026-03-08,Uber,390.07,Transport,3,March,Sunday,10,Transport,0.4922
+2026-03-09,Haltons Pharmacy,3833.5,Health,3,March,Monday,11,Health,0.4947
+2026-03-09,Mr Price,6891.6,Shopping,3,March,Monday,11,Rent,0.369
+2026-03-09,Kenya Power,3675.99,Utilities,3,March,Monday,11,Utilities,0.8926
+2026-03-09,Kfc Nairobi,963.15,Food,3,March,Monday,11,Transport,0.2237
+2026-03-10,Zara Village Market,2525.58,Shopping,3,March,Tuesday,11,Shopping,0.5475
+2026-03-11,Chicken Inn,2478.82,Food,3,March,Wednesday,11,Food,0.882
+2026-03-11,Nike Town,11967.39,Shopping,3,March,Wednesday,11,Entertainment,0.5341
+2026-03-11,Dstv,1302.14,Entertainment,3,March,Wednesday,11,Transport,0.3038
+2026-03-12,Chicken Inn,1331.7,Food,3,March,Thursday,11,Food,0.882
+2026-03-12,Kenya Power,2864.78,Utilities,3,March,Thursday,11,Utilities,0.8926
+2026-03-12,Naivas Supermarket,365.63,Food,3,March,Thursday,11,Shopping,0.6576
+2026-03-13,Dstv,1293.95,Entertainment,3,March,Friday,11,Transport,0.3038
+2026-03-14,Haltons Pharmacy,1869.1,Health,3,March,Saturday,11,Health,0.4947
+2026-03-14,Subway Westgate,582.12,Food,3,March,Saturday,11,Transport,0.7026
+2026-03-14,Jumia,8339.67,Shopping,3,March,Saturday,11,Entertainment,0.3662
+2026-03-14,Bank Transfer,6351.17,Other,3,March,Saturday,11,Other,0.1956
+2026-03-15,Carrefour,1255.22,Food,3,March,Sunday,11,Shopping,0.4168
+2026-03-15,Java House,2470.69,Food,3,March,Sunday,11,Entertainment,0.3309
+2026-03-16,Carrefour,1740.24,Food,3,March,Monday,12,Shopping,0.4168
+2026-03-16,Showmax,810.17,Entertainment,3,March,Monday,12,Entertainment,0.6353
+2026-03-16,Zara Village Market,6689.54,Shopping,3,March,Monday,12,Shopping,0.5475
+2026-03-17,Uber,202.67,Transport,3,March,Tuesday,12,Transport,0.4922
+2026-03-17,Total Energies,758.9,Transport,3,March,Tuesday,12,Utilities,0.4979
+2026-03-17,Kilimall,559.59,Shopping,3,March,Tuesday,12,Entertainment,0.2543
+2026-03-17,Spotify,1495.96,Entertainment,3,March,Tuesday,12,Entertainment,0.7264
+2026-03-17,Haltons Pharmacy,6678.44,Health,3,March,Tuesday,12,Health,0.4947
+2026-03-18,Spotify,1264.39,Entertainment,3,March,Wednesday,12,Entertainment,0.7264
+2026-03-18,Haltons Pharmacy,3809.15,Health,3,March,Wednesday,12,Health,0.4947
+2026-03-18,Matatu Fare,572.91,Transport,3,March,Wednesday,12,Transport,0.8891
+2026-03-18,Nike Town,2321.35,Shopping,3,March,Wednesday,12,Entertainment,0.5341
+2026-03-18,Shell Petrol,326.77,Transport,3,March,Wednesday,12,Rent,0.2081
+2026-03-18,Chicken Inn,211.77,Food,3,March,Wednesday,12,Food,0.882
+2026-03-19,Carrefour,972.77,Food,3,March,Thursday,12,Shopping,0.4168
+2026-03-19,Kenya Bus,790.09,Transport,3,March,Thursday,12,Transport,0.9455
+2026-03-20,Airtel Kenya,769.91,Utilities,3,March,Friday,12,Entertainment,0.3026
+2026-03-20,Matatu Fare,88.37,Transport,3,March,Friday,12,Transport,0.8891
+2026-03-21,Bolt,448.37,Transport,3,March,Saturday,12,Transport,0.2811
+2026-03-21,Nairobi Hospital,6771.73,Health,3,March,Saturday,12,Health,0.9826
+2026-03-21,Zara Village Market,8333.04,Shopping,3,March,Saturday,12,Shopping,0.5475
+2026-03-21,Chicken Inn,1240.29,Food,3,March,Saturday,12,Food,0.882
+2026-03-21,Subway Westgate,795.03,Food,3,March,Saturday,12,Transport,0.7026
+2026-03-21,Haltons Pharmacy,5327.51,Health,3,March,Saturday,12,Health,0.4947
+2026-03-22,Kfc Nairobi,2295.87,Food,3,March,Sunday,12,Transport,0.2237
+2026-03-22,Mama Oliech,1001.05,Food,3,March,Sunday,12,Entertainment,0.2993
+2026-03-22,Total Energies,293.29,Transport,3,March,Sunday,12,Utilities,0.4979
+2026-03-23,Mr Price,7987.99,Shopping,3,March,Monday,13,Rent,0.369
+2026-03-23,Aar Clinic,4406.02,Health,3,March,Monday,13,Health,0.7828
+2026-03-23,Rent Payment,26035.23,Rent,3,March,Monday,13,Rent,0.968
+2026-03-24,M-Pesa Send Money,8303.5,Other,3,March,Tuesday,13,Transport,0.2993
+2026-03-24,Java House,2061.67,Food,3,March,Tuesday,13,Entertainment,0.3309
+2026-03-24,Rent Payment,40701.96,Rent,3,March,Tuesday,13,Rent,0.968
+2026-03-24,Netflix,1058.35,Entertainment,3,March,Tuesday,13,Entertainment,0.6502
+2026-03-24,Shell Petrol,136.73,Transport,3,March,Tuesday,13,Rent,0.2081
+2026-03-25,Naivas Supermarket,1902.64,Food,3,March,Wednesday,13,Shopping,0.6576
+2026-03-26,Little Cab,186.12,Transport,3,March,Thursday,13,Transport,0.6053
+2026-03-26,Subway Westgate,1065.27,Food,3,March,Thursday,13,Transport,0.7026
+2026-03-27,Zara Village Market,3035.07,Shopping,3,March,Friday,13,Shopping,0.5475
+2026-03-27,Carrefour,721.79,Food,3,March,Friday,13,Shopping,0.4168
+2026-03-28,Rent Payment,42207.87,Rent,3,March,Saturday,13,Rent,0.968
+2026-03-28,Total Energies,198.75,Transport,3,March,Saturday,13,Utilities,0.4979
+2026-03-28,Kenya Bus,321.53,Transport,3,March,Saturday,13,Transport,0.9455
+2026-03-28,Uber 072515 Sf**Pool**,6.33,Unknown,3,March,Saturday,13,Transport,0.6661
+2026-03-28,Zara Village Market,5509.11,Shopping,3,March,Saturday,13,Shopping,0.5475
+2026-03-29,Nairobi Hospital,3171.05,Health,3,March,Sunday,13,Health,0.9826
+2026-03-29,Java House,2012.68,Food,3,March,Sunday,13,Entertainment,0.3309
+2026-03-29,Safaricom,3561.54,Utilities,3,March,Sunday,13,Entertainment,0.2268
+2026-03-29,Little Cab,305.25,Transport,3,March,Sunday,13,Transport,0.6053
+2026-03-29,Bolt,641.48,Transport,3,March,Sunday,13,Transport,0.2811
+2026-03-30,Dstv,1402.19,Entertainment,3,March,Monday,14,Transport,0.3038
+2026-03-30,United Airlines,500.0,Unknown,3,March,Monday,14,Transport,0.3575
+2026-03-30,Spotify,825.31,Entertainment,3,March,Monday,14,Entertainment,0.7264
+2026-03-30,Bolt,337.69,Transport,3,March,Monday,14,Transport,0.2811
+2026-03-30,Kenya Bus,303.78,Transport,3,March,Monday,14,Transport,0.9455
+2026-03-31,Subway Westgate,1876.15,Food,3,March,Tuesday,14,Transport,0.7026
+2026-03-31,Kenya Power,1842.76,Utilities,3,March,Tuesday,14,Utilities,0.8926
+2026-04-01,Naivas Supermarket,485.53,Food,4,April,Wednesday,14,Shopping,0.6576
+2026-04-01,Uber,779.86,Transport,4,April,Wednesday,14,Transport,0.4922
+2026-04-01,Aar Clinic,2267.44,Health,4,April,Wednesday,14,Health,0.7828
+2026-04-02,Kfc Nairobi,2462.25,Food,4,April,Thursday,14,Transport,0.2237
+2026-04-02,Aar Clinic,2758.13,Health,4,April,Thursday,14,Health,0.7828
+2026-04-03,Kenya Power,4251.62,Utilities,4,April,Friday,14,Utilities,0.8926
+2026-04-03,Artcaffe,472.59,Food,4,April,Friday,14,Entertainment,0.4274
+2026-04-04,Netflix,486.7,Entertainment,4,April,Saturday,14,Entertainment,0.6502
+2026-04-04,Showmax,929.08,Entertainment,4,April,Saturday,14,Entertainment,0.6353
+2026-04-04,Artcaffe,2099.1,Food,4,April,Saturday,14,Entertainment,0.4274
+2026-04-04,Subway Westgate,867.64,Food,4,April,Saturday,14,Transport,0.7026
+2026-04-04,Mama Oliech,2209.52,Food,4,April,Saturday,14,Entertainment,0.2993
+2026-04-04,Subway Westgate,1574.85,Food,4,April,Saturday,14,Transport,0.7026
+2026-04-05,Shell Petrol,259.79,Transport,4,April,Sunday,14,Rent,0.2081
+2026-04-05,Airtel Kenya,4885.46,Utilities,4,April,Sunday,14,Entertainment,0.3026
+2026-04-05,Subway Westgate,1651.54,Food,4,April,Sunday,14,Transport,0.7026
+2026-04-05,Rent Payment,40176.87,Rent,4,April,Sunday,14,Rent,0.968
+2026-04-06,Total Energies,72.71,Transport,4,April,Monday,15,Utilities,0.4979
+2026-04-06,Dstv,1207.73,Entertainment,4,April,Monday,15,Transport,0.3038
+2026-04-06,Kfc Nairobi,2321.19,Food,4,April,Monday,15,Transport,0.2237
+2026-04-06,Nairobi Hospital,6941.13,Health,4,April,Monday,15,Health,0.9826
+2026-04-06,Aar Clinic,5100.34,Health,4,April,Monday,15,Health,0.7828
+2026-04-07,Steam,1346.52,Entertainment,4,April,Tuesday,15,Entertainment,0.3143
+2026-04-07,Kenya Power,2549.37,Utilities,4,April,Tuesday,15,Utilities,0.8926
+2026-04-08,Nairobi Hospital,4220.53,Health,4,April,Wednesday,15,Health,0.9826
+2026-04-08,Kenya Power,1627.72,Utilities,4,April,Wednesday,15,Utilities,0.8926
+2026-04-09,Rent Payment,35708.71,Rent,4,April,Thursday,15,Rent,0.968
+2026-04-09,Showmax,510.59,Entertainment,4,April,Thursday,15,Entertainment,0.6353
+2026-04-09,Subway Westgate,784.38,Food,4,April,Thursday,15,Transport,0.7026
+2026-04-09,Kenya Bus,635.2,Transport,4,April,Thursday,15,Transport,0.9455
+2026-04-09,Naivas Supermarket,326.35,Food,4,April,Thursday,15,Shopping,0.6576
+2026-04-09,Mr Price,7222.44,Shopping,4,April,Thursday,15,Rent,0.369
+2026-04-09,Steam,1432.91,Entertainment,4,April,Thursday,15,Entertainment,0.3143
+2026-04-09,Dstv,785.31,Entertainment,4,April,Thursday,15,Transport,0.3038
+2026-04-09,Kenya Bus,235.43,Transport,4,April,Thursday,15,Transport,0.9455
+2026-04-10,Netflix,1466.75,Entertainment,4,April,Friday,15,Entertainment,0.6502
+2026-04-10,Mama Oliech,818.72,Food,4,April,Friday,15,Entertainment,0.2993
+2026-04-10,Naivas Supermarket,340.87,Food,4,April,Friday,15,Shopping,0.6576
+2026-04-10,Mama Oliech,1433.13,Food,4,April,Friday,15,Entertainment,0.2993
+2026-04-10,Sparkfun,89.4,Unknown,4,April,Friday,15,Entertainment,0.9083
+2026-04-11,Java House,1949.7,Food,4,April,Saturday,15,Entertainment,0.3309
+2026-04-11,Rent Payment,25532.99,Rent,4,April,Saturday,15,Rent,0.968
+2026-04-11,Mcdonald'S,12.0,Unknown,4,April,Saturday,15,Food,0.9316
+2026-04-11,Subway Westgate,457.56,Food,4,April,Saturday,15,Transport,0.7026
+2026-04-11,Starbucks,4.33,Unknown,4,April,Saturday,15,Entertainment,0.3813
+2026-04-11,Mama Oliech,1429.49,Food,4,April,Saturday,15,Entertainment,0.2993
+2026-04-12,Touchstone Climbing,78.5,Unknown,4,April,Sunday,15,Entertainment,0.2828
+2026-04-12,Java House,1255.68,Food,4,April,Sunday,15,Entertainment,0.3309
+2026-04-12,Total Energies,644.3,Transport,4,April,Sunday,15,Utilities,0.4979
+2026-04-12,Carrefour,2154.06,Food,4,April,Sunday,15,Shopping,0.4168
+2026-04-12,Naivas Supermarket,1468.93,Food,4,April,Sunday,15,Shopping,0.6576
+2026-04-12,Airtel Kenya,940.59,Utilities,4,April,Sunday,15,Entertainment,0.3026
+2026-04-13,Chicken Inn,774.0,Food,4,April,Monday,16,Food,0.882
+2026-04-13,Java House,1113.45,Food,4,April,Monday,16,Entertainment,0.3309
+2026-04-13,Dstv,313.72,Entertainment,4,April,Monday,16,Transport,0.3038
+2026-04-13,Java House,1936.51,Food,4,April,Monday,16,Entertainment,0.3309
+2026-04-13,Zuku Fibre,3252.55,Utilities,4,April,Monday,16,Entertainment,0.3237
+2026-04-13,Cd Deposit .Initial.,1000.0,Unknown,4,April,Monday,16,Transport,0.189
+2026-04-13,Ach Electronic Creditgusto Pay 123456,5850.0,Unknown,4,April,Monday,16,Utilities,0.1779
+2026-04-13,Artcaffe,1313.0,Food,4,April,Monday,16,Entertainment,0.4274
+2026-04-14,Spotify,640.98,Entertainment,4,April,Tuesday,16,Entertainment,0.7264
+2026-04-14,Credit Card 3333 Payment *//,25.0,Unknown,4,April,Tuesday,16,Other,0.2911
+2026-04-14,Goodlife Pharmacy,4950.16,Health,4,April,Tuesday,16,Health,0.849
+2026-04-14,Dstv,485.03,Entertainment,4,April,Tuesday,16,Transport,0.3038
+2026-04-14,Uber 063015 Sf**Pool**,5.4,Unknown,4,April,Tuesday,16,Transport,0.6669
+2026-04-15,Carrefour,789.44,Food,4,April,Wednesday,16,Shopping,0.4168
+2026-04-15,Rent Payment,15966.52,Rent,4,April,Wednesday,16,Rent,0.968
+2026-04-16,Subway Westgate,314.44,Food,4,April,Thursday,16,Transport,0.7026
+2026-04-16,Mr Price,6331.91,Shopping,4,April,Thursday,16,Rent,0.369
+2026-04-16,Safaricom,3569.3,Utilities,4,April,Thursday,16,Entertainment,0.2268
+2026-04-16,Spotify,1208.82,Entertainment,4,April,Thursday,16,Entertainment,0.7264
+2026-04-17,Uber,341.64,Transport,4,April,Friday,16,Transport,0.4922
+2026-04-17,Dstv,1124.23,Entertainment,4,April,Friday,16,Transport,0.3038
+2026-04-17,Kilimall,3288.27,Shopping,4,April,Friday,16,Entertainment,0.2543
+2026-04-17,Showmax,900.31,Entertainment,4,April,Friday,16,Entertainment,0.6353
+2026-04-17,Nairobi Hospital,6542.84,Health,4,April,Friday,16,Health,0.9826
+2026-04-17,Artcaffe,1087.63,Food,4,April,Friday,16,Entertainment,0.4274
+2026-04-17,Matatu Fare,299.98,Transport,4,April,Friday,16,Transport,0.8891
+2026-04-18,Kilimall,10391.62,Shopping,4,April,Saturday,16,Entertainment,0.2543
+2026-04-18,Mama Oliech,1507.07,Food,4,April,Saturday,16,Entertainment,0.2993
+2026-04-18,Carrefour,1218.75,Food,4,April,Saturday,16,Shopping,0.4168
+2026-04-18,Carrefour,687.97,Food,4,April,Saturday,16,Shopping,0.4168
+2026-04-19,Jumia,5224.87,Shopping,4,April,Sunday,16,Entertainment,0.3662
+2026-04-19,Rent Payment,31388.2,Rent,4,April,Sunday,16,Rent,0.968
+2026-04-19,Nairobi Water,4555.44,Utilities,4,April,Sunday,16,Utilities,0.9514
+2026-04-19,Shell Petrol,650.82,Transport,4,April,Sunday,16,Rent,0.2081
+2026-04-20,Matatu Fare,331.73,Transport,4,April,Monday,17,Transport,0.8891
+2026-04-20,Artcaffe,1799.28,Food,4,April,Monday,17,Entertainment,0.4274
+2026-04-20,Zara Village Market,2199.42,Shopping,4,April,Monday,17,Shopping,0.5475
+2026-04-20,Chicken Inn,2493.57,Food,4,April,Monday,17,Food,0.882
+2026-04-22,Bolt,746.69,Transport,4,April,Wednesday,17,Transport,0.2811
+2026-04-23,Java House,925.04,Food,4,April,Thursday,17,Entertainment,0.3309
+2026-04-23,Nike Town,8328.58,Shopping,4,April,Thursday,17,Entertainment,0.5341
+2026-04-23,Automatic Payment - Thank,2078.5,Unknown,4,April,Thursday,17,Transport,0.1671
+2026-04-23,Madison Bicycle Shop,500.0,Unknown,4,April,Thursday,17,Shopping,0.5123
+2026-04-23,Kfc,500.0,Unknown,4,April,Thursday,17,Food,0.5779
+2026-04-24,Nike Town,3292.77,Shopping,4,April,Friday,17,Entertainment,0.5341
+2026-04-24,Artcaffe,1179.57,Food,4,April,Friday,17,Entertainment,0.4274
+2026-04-24,Chicken Inn,820.34,Food,4,April,Friday,17,Food,0.882
+2026-04-24,Tectra Inc,500.0,Unknown,4,April,Friday,17,Transport,0.7886
+2026-04-25,Woolworths,4796.69,Shopping,4,April,Saturday,17,Shopping,0.4354
+2026-04-25,Dstv,655.05,Entertainment,4,April,Saturday,17,Transport,0.3038
+2026-04-26,Nike Town,2883.69,Shopping,4,April,Sunday,17,Entertainment,0.5341
+2026-04-26,Zuku Fibre,3098.08,Utilities,4,April,Sunday,17,Entertainment,0.3237
+2026-04-26,Total Energies,268.9,Transport,4,April,Sunday,17,Utilities,0.4979
