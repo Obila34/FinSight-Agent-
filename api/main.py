@@ -1,29 +1,53 @@
+from __future__ import annotations
+
 import logging
 import os
 import time
+import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 import pandas as pd
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Query, status
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 import orchestrator as orchestrator_module
-from agents.anomaly_detector import detect_anomalies, weekly_anomaly_report
-from agents.classifier import CATEGORIES, compute_category_spending_stats
-from agents.forecaster import forecast_spending, get_forecast_summary, combine_forecast_summaries, check_budget_alerts
+from agents.anomaly_detector import (
+    anomaly_trend_analysis,
+    detect_anomalies,
+    merchant_risk_score,
+    peer_comparison,
+    weekly_anomaly_report,
+)
+from agents.classifier import (
+    CATEGORIES,
+    MERCHANT_KEYWORD_MAP,
+    compute_category_spending_stats,
+    feedback_loop,
+    normalize_input_for_classification,
+)
+from agents.forecaster import (
+    check_budget_alerts,
+    combine_forecast_summaries,
+    detect_recurring_charges,
+    forecast_spending,
+    get_forecast_summary,
+    savings_projection,
+    what_if_forecast,
+)
+from agents.orchestrator import circuit_open
 from agents.rag_engine import FinanceRAGEngine
 
 load_dotenv()
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s', force=True)
 logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 CLASSIFIED_PATH = os.path.join(DATA_DIR, "classified_transactions.csv")
+CLEANED_PATH = os.path.join(DATA_DIR, "cleaned_transactions.csv")
 
 TAGS_METADATA = [
     {"name": "Query", "description": "Query and intent routing endpoints"},
@@ -32,12 +56,13 @@ TAGS_METADATA = [
     {"name": "Classifier", "description": "Classifier endpoints"},
     {"name": "Conversation", "description": "Conversation context endpoints"},
     {"name": "Insights", "description": "Aggregated dashboard endpoints"},
+    {"name": "System", "description": "Health and system metadata"},
 ]
 
 app = FastAPI(
     title="FinSight Agent API",
     description="AI-powered personal finance assistant",
-    version="2.0.0",
+    version="2.1.0",
     openapi_tags=TAGS_METADATA,
 )
 
@@ -50,8 +75,31 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def observability_middleware(request: Request, call_next):
+    request_id = str(uuid.uuid4())
+    request.state.request_id = request_id
+    start = time.perf_counter()
+    try:
+        response: Response = await call_next(request)
+    except Exception:
+        logger.exception("request_id=%s unhandled error", request_id)
+        raise
+    elapsed_ms = round((time.perf_counter() - start) * 1000, 2)
+    response.headers["X-Request-ID"] = request_id
+    response.headers["X-Execution-Time"] = str(elapsed_ms)
+    logger.info(
+        "request_id=%s %s %s completed in %sms",
+        request_id,
+        request.method,
+        request.url.path,
+        elapsed_ms,
+    )
+    return response
+
+
 class ConversationMessage(BaseModel):
-    role: str = Field(..., pattern="^(user|assistant)$")
+    role: Literal["user", "assistant"]
     content: str = Field(..., min_length=1)
 
 
@@ -66,12 +114,17 @@ class QueryResponse(BaseModel):
     answer: str
     intent: Optional[str]
     intents: list[str]
-    intent_confidence: Optional[dict[str, float]]
+    intent_confidence: Optional[float]
     agents_invoked: list[str]
-    citations: list[dict]
+    citations: list[dict[str, Any]]
+    source_citations: list[dict[str, Any]]
     cached: bool
     execution_time_ms: float
     timestamp: str
+    conversation_history: Optional[list[ConversationMessage]] = None
+    filters: Optional[dict[str, Any]] = None
+    proactive_alert: Optional[str] = None
+    answer_quality_score: Optional[float] = None
 
 
 class SummaryResponse(BaseModel):
@@ -86,7 +139,7 @@ class SummaryResponse(BaseModel):
 
 
 class CategoriesResponse(BaseModel):
-    categories: list[dict]
+    categories: list[dict[str, Any]]
     execution_time_ms: float
     timestamp: str
 
@@ -94,7 +147,7 @@ class CategoriesResponse(BaseModel):
 class AnomaliesResponse(BaseModel):
     total_anomalies: int
     shown: int
-    anomalies: list[dict]
+    anomalies: list[dict[str, Any]]
     execution_time_ms: float
     timestamp: str
 
@@ -110,6 +163,8 @@ class ConversationResponse(BaseModel):
     metadata: dict[str, Any]
     execution_time_ms: float
     timestamp: str
+    session_summary: Optional[str] = None
+    proactive_alert: Optional[str] = None
 
 
 class FilteredQueryRequest(BaseModel):
@@ -121,24 +176,43 @@ class FilteredQueryRequest(BaseModel):
 
 class FilteredQueryResponse(BaseModel):
     answer: str
-    citations: list[dict]
+    citations: list[dict[str, Any]]
+    summary: dict[str, Any]
     execution_time_ms: float
     timestamp: str
 
 
 class ForecastResponse(BaseModel):
     category: str
-    total: float
+    total_forecast: float
     avg_daily: float
     max_day: float
+    lower_bound: float
+    upper_bound: float
     budget_alert: bool
+    budget_limit: Optional[float] = None
     changepoints: list[str]
-    mae: Optional[float]
+    mae: Optional[float] = None
+    rmse: Optional[float] = None
+    mape: Optional[float] = None
+    recurring_charges: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class ForecastAPIResponse(BaseModel):
     forecasts: list[ForecastResponse]
-    budget_alerts: list[dict]
+    budget_alerts: list[dict[str, Any]]
+    changepoints: list[str]
+    recurring_charges: list[dict[str, Any]]
+    savings_projection: dict[str, float]
+    execution_time_ms: float
+    timestamp: str
+
+
+class WhatIfForecastResponse(BaseModel):
+    category: str
+    change_pct: float
+    adjusted_total_30d: float
+    savings_impact_vs_base: float
     execution_time_ms: float
     timestamp: str
 
@@ -148,9 +222,10 @@ class AnomalyDetail(BaseModel):
     merchant: str
     category: str
     amount: float
-    severity: str
+    severity: Literal["LOW", "MEDIUM", "HIGH"]
     explanation: str
     anomaly_score: float
+    merchant_risk_score: Optional[float] = None
 
 
 class AnomalyReportResponse(BaseModel):
@@ -158,33 +233,69 @@ class AnomalyReportResponse(BaseModel):
     window_end: str
     anomaly_count: int
     total_anomaly_amount: float
-    top_categories: dict
+    top_categories: dict[str, int]
     anomalies: list[AnomalyDetail]
+    merchant_risk: list[dict[str, Any]]
+    execution_time_ms: float
+    timestamp: str
+
+
+class AnomalyTrendsResponse(BaseModel):
+    trend: dict[str, Any]
     execution_time_ms: float
     timestamp: str
 
 
 class ClassifierUncertainResponse(BaseModel):
     total_uncertain: int
-    transactions: list[dict]
+    transactions: list[dict[str, Any]]
     execution_time_ms: float
     timestamp: str
 
 
 class ClassifierStatsResponse(BaseModel):
-    stats: list[dict]
+    stats: list[dict[str, Any]]
+    velocity: list[dict[str, Any]]
     execution_time_ms: float
     timestamp: str
+
+
+class ClassifierFeedbackRequest(BaseModel):
+    transaction_id: str
+    correct_category: str
+
+
+class ClassifierFeedbackResponse(BaseModel):
+    ok: bool
+    cache_size: int
+    detail: str
 
 
 class InsightsResponse(BaseModel):
-    summary: dict
+    spending_summary: dict[str, Any]
     top_anomalies: list[AnomalyDetail]
     forecast: list[ForecastResponse]
-    uncertain_transactions: list[dict]
-    budget_alerts: list[dict]
+    uncertain_transactions: list[dict[str, Any]]
+    budget_warnings: list[dict[str, Any]]
+    peer_comparison: list[dict[str, Any]]
+    recurring_charges: list[dict[str, Any]]
+    savings_projection: Optional[dict[str, float]] = None
+    generated_at: str
     execution_time_ms: float
     timestamp: str
+
+
+class PeerComparisonResponse(BaseModel):
+    benchmark_currency: str
+    comparisons: list[dict[str, Any]]
+    execution_time_ms: float
+    timestamp: str
+
+
+class HealthResponse(BaseModel):
+    status: str
+    is_ready: bool
+    uptime_seconds: float
 
 
 def _now_iso() -> str:
@@ -193,13 +304,13 @@ def _now_iso() -> str:
 
 def _load_df() -> pd.DataFrame:
     df = pd.read_csv(CLASSIFIED_PATH)
-    df['date'] = pd.to_datetime(df['date'])
+    df["date"] = pd.to_datetime(df["date"])
     return df
 
 
-def _messages_to_history(messages: list[ConversationMessage]) -> list[dict]:
+def _messages_to_history(messages: list[ConversationMessage]) -> list[dict[str, Any]]:
     history = []
-    last_user = None
+    last_user: str | None = None
     for msg in messages:
         if msg.role == "user":
             last_user = msg.content
@@ -212,7 +323,6 @@ def _messages_to_history(messages: list[ConversationMessage]) -> list[dict]:
 def _apply_history(messages: Optional[list[ConversationMessage]]) -> None:
     if not messages:
         return
-
     history = _messages_to_history(messages)
     if hasattr(orchestrator_module, "_CONVERSATION_HISTORY"):
         orchestrator_module._CONVERSATION_HISTORY.clear()
@@ -228,11 +338,11 @@ def _compose_answer(intents: list[str], responses: dict) -> str:
     return "\n\n".join(parts)
 
 
-def _parse_budget_param(budget: Optional[str]) -> dict:
+def _parse_budget_param(budget: Optional[str]) -> dict[str, float]:
     if not budget:
         return {}
 
-    parsed = {}
+    parsed: dict[str, float] = {}
     for chunk in budget.split(","):
         if ":" not in chunk:
             continue
@@ -251,17 +361,6 @@ def _ensure_rag_engine() -> FinanceRAGEngine:
     return app.state.rag_engine
 
 
-def _cached_query_hit(question: str) -> bool:
-    if not hasattr(orchestrator_module, "_RESULT_CACHE"):
-        return False
-    cache = orchestrator_module._RESULT_CACHE
-    ttl = getattr(orchestrator_module, "_CACHE_TTL_SECONDS", 300)
-    entry = cache.get(question)
-    if not entry:
-        return False
-    return (time.time() - entry.get("timestamp", 0)) <= ttl
-
-
 def _get_cached_anomalies() -> pd.DataFrame:
     if getattr(app.state, "anomaly_cache", None) is None:
         df = _load_df()
@@ -270,27 +369,25 @@ def _get_cached_anomalies() -> pd.DataFrame:
     return app.state.anomaly_cache
 
 
-def _top_candidate_cache() -> dict:
+def _top_candidate_cache() -> dict[str, list[dict[str, Any]]]:
     if not hasattr(app.state, "candidate_cache"):
         app.state.candidate_cache = {}
     return app.state.candidate_cache
 
 
-def _get_top_candidates(merchant: str) -> list[dict]:
-    from agents.classifier import classifier as hf_classifier
+def _get_top_candidates(merchant: str) -> list[dict[str, Any]]:
+    import agents.classifier as clf_mod
 
     cache = _top_candidate_cache()
-    key = merchant.strip().lower()
+    key = normalize_input_for_classification(merchant)
     if key in cache:
         return cache[key]
 
-    result = hf_classifier(merchant, CATEGORIES)
-    top_labels = result['labels'][:3]
-    top_scores = result['scores'][:3]
-    candidates = [
-        {"category": label, "confidence": round(float(score), 4)}
-        for label, score in zip(top_labels, top_scores)
-    ]
+    clf_mod._ensure_classifier()
+    result = clf_mod.classifier(merchant, CATEGORIES)
+    top_labels = result["labels"][:3]
+    top_scores = result["scores"][:3]
+    candidates = [{"category": label, "confidence": round(float(score), 4)} for label, score in zip(top_labels, top_scores)]
     cache[key] = candidates
     return candidates
 
@@ -304,65 +401,104 @@ def _validate_date(value: Optional[str]) -> None:
         raise HTTPException(status_code=400, detail=f"Invalid date format: {value}") from exc
 
 
+def require_rag_available() -> None:
+    if circuit_open("rag"):
+        logger.error("RAG circuit breaker open — rejecting request.")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="RAG subsystem degraded (circuit breaker open). Please retry shortly.",
+        )
+
+
 @app.on_event("startup")
 def startup_event() -> None:
-    """Preload models and caches, validate files, and log startup time."""
+    """Warm caches, validate optional data files, and mark readiness."""
     start = time.perf_counter()
-    required_files = [CLASSIFIED_PATH]
+    app.state.start_time = time.time()
+    app.state.is_ready = False
 
-    missing = [path for path in required_files if not os.path.exists(path)]
-    if missing:
-        logger.error("Missing required data files: %s", missing)
-        raise RuntimeError(f"Missing required data files: {missing}")
+    for path in [CLASSIFIED_PATH, CLEANED_PATH]:
+        if not os.path.exists(path):
+            logger.warning("Optional data file missing — continuing with degraded mode: %s", path)
 
-    app.state.rag_engine = FinanceRAGEngine(data_path=CLASSIFIED_PATH)
-    app.state.anomaly_cache = detect_anomalies(_load_df())
-    app.state.anomaly_cache_ts = time.time()
+    try:
+        from agents.orchestrator import reset_circuit
 
-    logger.info("Startup complete in %.2f ms", (time.perf_counter() - start) * 1000)
+        for agent in ("rag", "forecast", "anomaly", "classify"):
+            reset_circuit(agent)
+
+        if os.path.exists(CLASSIFIED_PATH):
+            app.state.rag_engine = FinanceRAGEngine(data_path=CLASSIFIED_PATH)
+            try:
+                app.state.rag_engine.warm("summary of spending")
+            except Exception as exc:
+                logger.warning("RAG warm-up warning: %s", exc)
+
+            df = _load_df()
+            app.state.anomaly_cache = detect_anomalies(df)
+            app.state.anomaly_cache_ts = time.time()
+
+            cat_col = "predicted_category" if "predicted_category" in df.columns else "category"
+            app.state.classifier_stats_cache = compute_category_spending_stats(df, category_column=cat_col)
+        else:
+            logger.warning("Classified transactions missing — caches empty.")
+            app.state.anomaly_cache = None
+            app.state.classifier_stats_cache = None
+
+        app.state.is_ready = True
+    except Exception:
+        logger.exception("Startup encountered errors — API may be partially degraded.")
+        app.state.is_ready = False
+
+    elapsed_ms = (time.perf_counter() - start) * 1000
+    logger.info("Startup finished in %.2f ms — is_ready=%s", elapsed_ms, app.state.is_ready)
 
 
-@app.get("/", tags=["Query"])
+@app.get("/", tags=["System"], summary="Root metadata")
 def root():
-    """Return API metadata and available endpoints."""
     return {
         "name": "FinSight Agent API",
         "status": "running",
-        "version": "2.0.0",
-        "endpoints": ["/query", "/summary", "/health"]
+        "version": "2.1.0",
+        "endpoints": [
+            "/query",
+            "/summary",
+            "/health",
+            "/forecast",
+            "/anomalies",
+            "/insights",
+        ],
     }
 
 
-@app.get("/health", tags=["Query"])
+@app.get("/health", response_model=HealthResponse, tags=["System"], summary="Liveness and readiness")
 def health_check():
-    """Simple health check endpoint."""
-    return {
-        "status": "healthy",
-        "timestamp": _now_iso()
-    }
+    uptime = max(0.0, time.time() - getattr(app.state, "start_time", time.time()))
+    ready = bool(getattr(app.state, "is_ready", False))
+    status_label = "healthy" if ready else "degraded"
+    return HealthResponse(status=status_label, is_ready=ready, uptime_seconds=round(uptime, 3))
 
 
 @app.post("/query", response_model=QueryResponse, tags=["Query"], status_code=status.HTTP_200_OK)
-def query(request: QueryRequest):
-    """Primary query endpoint with multi-intent routing and optional RAG filters."""
+def query(http_request: Request, payload: QueryRequest):
     start_time = time.perf_counter()
-    logger.info("Received query: %s", request.question)
+    rid = getattr(http_request.state, "request_id", None)
 
-    if not request.question.strip():
+    if not payload.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty")
 
     try:
-        _apply_history(request.conversation_history)
-        cached_hit = _cached_query_hit(request.question)
+        _apply_history(payload.conversation_history)
 
-        result = orchestrator_module.ask(request.question)
+        result = orchestrator_module.ask(payload.question)
         metadata = result.get("metadata", {})
         intents = metadata.get("intents", [])
 
-        if request.filters and "rag" in intents:
+        if payload.filters and "rag" in intents:
+            require_rag_available()
             engine = _ensure_rag_engine()
-            rag_result = engine.ask_with_summary(request.question, filters=request.filters)
-            result["responses"]["rag"] = {
+            rag_result = engine.ask_with_summary(payload.question, filters=payload.filters)
+            result.setdefault("responses", {})["rag"] = {
                 "answer": rag_result.get("answer", ""),
                 "summary": rag_result.get("summary", {}),
                 "citations": rag_result.get("citations", []),
@@ -370,39 +506,53 @@ def query(request: QueryRequest):
             result["answer"] = _compose_answer(intents, result["responses"])
 
         citations = result.get("responses", {}).get("rag", {}).get("citations", [])
-        intent_confidence = metadata.get("intent_confidence")
+        intent_conf_dict = metadata.get("intent_confidence") or {}
+        top_conf = float(next(iter(intent_conf_dict.values()))) if intent_conf_dict else None
         intent = intents[0] if intents else None
 
         execution_time = (time.perf_counter() - start_time) * 1000
+
+        proactive = metadata.get("proactive_alert")
+        updated_messages = None
+        if payload.conversation_history:
+            updated_messages = payload.conversation_history + [
+                ConversationMessage(role="user", content=payload.question),
+                ConversationMessage(role="assistant", content=result.get("answer", "")),
+            ]
+
+        cit_list = citations or metadata.get("source_citations") or []
+
         return QueryResponse(
-            question=request.question,
+            question=payload.question,
             answer=result.get("answer", ""),
             intent=intent,
             intents=intents,
-            intent_confidence=intent_confidence,
+            intent_confidence=top_conf,
             agents_invoked=intents,
-            citations=citations,
-            cached=bool(cached_hit),
+            citations=list(cit_list),
+            source_citations=list(cit_list),
+            cached=bool(metadata.get("cached", False)),
             execution_time_ms=round(execution_time, 2),
-            timestamp=_now_iso()
+            timestamp=_now_iso(),
+            conversation_history=updated_messages,
+            filters=payload.filters,
+            proactive_alert=proactive,
+            answer_quality_score=metadata.get("answer_quality_score"),
         )
     except HTTPException:
         raise
     except Exception as exc:
-        logger.error("Query error: %s", exc)
+        logger.exception("Query failed request_id=%s", rid)
         raise HTTPException(status_code=500, detail=f"Query error: {exc}")
 
 
-@app.post("/query/filtered", response_model=FilteredQueryResponse, tags=["Query"], status_code=status.HTTP_200_OK)
-def query_filtered(request: FilteredQueryRequest):
-    """Query endpoint that applies metadata filters to the RAG engine."""
+@app.post("/query/filtered", response_model=FilteredQueryResponse, tags=["Query"])
+def query_filtered(request: FilteredQueryRequest, _: None = Depends(require_rag_available)):
     start_time = time.perf_counter()
-    logger.info("Received filtered query: %s", request.question)
-
     _validate_date(request.date_from)
     _validate_date(request.date_to)
 
-    filters = {}
+    filters: dict[str, Any] = {}
     if request.category:
         filters["category"] = request.category
     if request.date_from:
@@ -417,209 +567,204 @@ def query_filtered(request: FilteredQueryRequest):
         return FilteredQueryResponse(
             answer=result.get("answer", ""),
             citations=result.get("citations", []),
+            summary=result.get("summary", {}),
             execution_time_ms=round(execution_time, 2),
-            timestamp=_now_iso()
+            timestamp=_now_iso(),
         )
+    except HTTPException:
+        raise
     except Exception as exc:
-        logger.error("Filtered query error: %s", exc)
+        logger.exception("Filtered query failed")
         raise HTTPException(status_code=500, detail=f"Filtered query error: {exc}")
 
 
-@app.post("/conversation", response_model=ConversationResponse, tags=["Conversation"], status_code=status.HTTP_200_OK)
-def conversation(request: ConversationRequest):
-    """Handles a full conversation history plus a new question."""
+@app.post("/conversation", response_model=ConversationResponse, tags=["Conversation"])
+def conversation(request: ConversationRequest, _: None = Depends(require_rag_available)):
     start_time = time.perf_counter()
-    logger.info("Received conversation question: %s", request.question)
-
+    _apply_history(request.messages)
     try:
-        _apply_history(request.messages)
         result = orchestrator_module.ask(request.question)
         execution_time = (time.perf_counter() - start_time) * 1000
         updated_messages = request.messages + [
             ConversationMessage(role="user", content=request.question),
-            ConversationMessage(role="assistant", content=result.get("answer", ""))
+            ConversationMessage(role="assistant", content=result.get("answer", "")),
         ]
+
+        meta = result.get("metadata", {})
+        session_summary = None
+        if len(updated_messages) >= 10:
+            session_summary = meta.get("answer_quality_score") and "Conversation covers multiple financial intents."
+
         return ConversationResponse(
             answer=result.get("answer", ""),
             messages=updated_messages,
-            metadata=result.get("metadata", {}),
+            metadata=meta,
             execution_time_ms=round(execution_time, 2),
-            timestamp=_now_iso()
+            timestamp=_now_iso(),
+            session_summary=session_summary or meta.get("session_summary"),
+            proactive_alert=meta.get("proactive_alert"),
         )
     except Exception as exc:
-        logger.error("Conversation error: %s", exc)
+        logger.exception("Conversation error")
         raise HTTPException(status_code=500, detail=f"Conversation error: {exc}")
 
 
-@app.get("/summary", response_model=SummaryResponse, tags=["Query"], status_code=status.HTTP_200_OK)
+@app.get("/summary", response_model=SummaryResponse, tags=["Query"])
 def get_summary():
-    """Returns an overview summary of spending and anomaly counts."""
     start_time = time.perf_counter()
-
     try:
         df = _load_df()
         df_anomalies = _get_cached_anomalies()
-        anomaly_count = int(df_anomalies['is_anomaly'].sum())
+        anomaly_count = int(df_anomalies["is_anomaly"].sum())
 
-        top_category = (
-            df.groupby('category')['amount']
-            .sum()
-            .idxmax()
-        )
-
-        date_range = (
-            f"{df['date'].min().strftime('%d %b %Y')} to "
-            f"{df['date'].max().strftime('%d %b %Y')}"
-        )
+        top_category = df.groupby("category")["amount"].sum().idxmax()
+        date_range = f"{df['date'].min().strftime('%d %b %Y')} to {df['date'].max().strftime('%d %b %Y')}"
 
         execution_time = (time.perf_counter() - start_time) * 1000
         return SummaryResponse(
             total_transactions=len(df),
-            total_spend=round(float(df['amount'].sum()), 2),
-            top_category=top_category,
-            avg_transaction=round(float(df['amount'].mean()), 2),
+            total_spend=round(float(df["amount"].sum()), 2),
+            top_category=str(top_category),
+            avg_transaction=round(float(df["amount"].mean()), 2),
             anomaly_count=anomaly_count,
             date_range=date_range,
             execution_time_ms=round(execution_time, 2),
-            timestamp=_now_iso()
+            timestamp=_now_iso(),
         )
     except Exception as exc:
-        logger.error("Summary error: %s", exc)
+        logger.exception("Summary error")
         raise HTTPException(status_code=500, detail=f"Summary error: {exc}")
 
 
-@app.get("/categories", response_model=CategoriesResponse, tags=["Classifier"], status_code=status.HTTP_200_OK)
+@app.get("/categories", response_model=CategoriesResponse, tags=["Classifier"])
 def get_categories():
-    """Returns category breakdown summary."""
     start_time = time.perf_counter()
-
     try:
         df = _load_df()
+        breakdown = df.groupby("category")["amount"].agg(["count", "sum", "mean"]).round(2).reset_index()
 
-        breakdown = (
-            df.groupby('category')['amount']
-            .agg(['count', 'sum', 'mean'])
-            .round(2)
-            .reset_index()
-        )
-
+        total_spend = df["amount"].sum()
         result = []
-        total_spend = df['amount'].sum()
-
         for _, row in breakdown.iterrows():
-            result.append({
-                "category": row['category'],
-                "transaction_count": int(row['count']),
-                "total_spend": round(float(row['sum']), 2),
-                "avg_spend": round(float(row['mean']), 2),
-                "percentage_of_total": round((row['sum'] / total_spend) * 100, 1)
-            })
+            result.append(
+                {
+                    "category": row["category"],
+                    "transaction_count": int(row["count"]),
+                    "total_spend": round(float(row["sum"]), 2),
+                    "avg_spend": round(float(row["mean"]), 2),
+                    "percentage_of_total": round((row["sum"] / total_spend) * 100, 1),
+                }
+            )
 
-        result = sorted(result, key=lambda x: x['total_spend'], reverse=True)
+        result = sorted(result, key=lambda x: x["total_spend"], reverse=True)
         execution_time = (time.perf_counter() - start_time) * 1000
         return CategoriesResponse(
             categories=result,
             execution_time_ms=round(execution_time, 2),
-            timestamp=_now_iso()
+            timestamp=_now_iso(),
         )
     except Exception as exc:
-        logger.error("Category breakdown error: %s", exc)
+        logger.exception("Category breakdown error")
         raise HTTPException(status_code=500, detail=f"Category breakdown error: {exc}")
 
 
-@app.get("/anomalies", response_model=AnomaliesResponse, tags=["Anomalies"], status_code=status.HTTP_200_OK)
+@app.get("/anomalies", response_model=AnomaliesResponse, tags=["Anomalies"])
 def get_anomalies(limit: int = Query(10, ge=1, le=100)):
-    """Returns the top anomalous transactions."""
     start_time = time.perf_counter()
-
     try:
         df_results = _get_cached_anomalies()
 
         anomalies = (
-            df_results[df_results['is_anomaly'] == True]
-            .sort_values('anomaly_score', ascending=False)
-            .head(limit)
+            df_results[df_results["is_anomaly"]].sort_values("anomaly_score", ascending=False).head(limit)
         )
 
         result = []
         for _, row in anomalies.iterrows():
-            result.append({
-                "date": str(row['date']),
-                "merchant": row['merchant'],
-                "category": row['category'],
-                "amount": round(float(row['amount']), 2),
-                "anomaly_score": round(float(row['anomaly_score']), 4),
-                "severity": row.get('severity'),
-                "explanation": row.get('anomaly_explanation', "")
-            })
+            result.append(
+                {
+                    "date": str(row["date"]),
+                    "merchant": row["merchant"],
+                    "category": row["category"],
+                    "amount": round(float(row["amount"]), 2),
+                    "anomaly_score": round(float(row["anomaly_score"]), 4),
+                    "severity": row.get("severity"),
+                    "explanation": row.get("anomaly_explanation", ""),
+                }
+            )
 
         execution_time = (time.perf_counter() - start_time) * 1000
         return AnomaliesResponse(
-            total_anomalies=int(df_results['is_anomaly'].sum()),
+            total_anomalies=int(df_results["is_anomaly"].sum()),
             shown=len(result),
             anomalies=result,
             execution_time_ms=round(execution_time, 2),
-            timestamp=_now_iso()
+            timestamp=_now_iso(),
         )
     except Exception as exc:
-        logger.error("Anomaly error: %s", exc)
+        logger.exception("Anomaly error")
         raise HTTPException(status_code=500, detail=f"Anomaly error: {exc}")
 
 
-@app.get("/anomalies/report", response_model=AnomalyReportResponse, tags=["Anomalies"], status_code=status.HTTP_200_OK)
+@app.get("/anomalies/report", response_model=AnomalyReportResponse, tags=["Anomalies"])
 def anomaly_report():
-    """Returns a weekly anomaly report with detailed anomalies."""
     start_time = time.perf_counter()
-
     try:
         df_results = _get_cached_anomalies()
         report = weekly_anomaly_report(df_results)
 
-        latest_date = df_results['date'].max()
+        latest_date = df_results["date"].max()
         window_start = latest_date - pd.Timedelta(days=7)
-        recent = df_results[(df_results['date'] >= window_start) & (df_results['is_anomaly'])]
+        recent = df_results[(df_results["date"] >= window_start) & (df_results["is_anomaly"])]
 
-        anomalies = [
-            AnomalyDetail(
-                date=str(row.date),
-                merchant=row.merchant,
-                category=row.category,
-                amount=float(row.amount),
-                severity=row.severity,
-                explanation=row.anomaly_explanation,
-                anomaly_score=float(row.anomaly_score),
+        risk_tbl = merchant_risk_score(df_results)
+
+        anomalies = []
+        for row in recent.itertuples():
+            risk_row = risk_tbl[risk_tbl["merchant"] == row.merchant]
+            mrs = float(risk_row["risk_score"].iloc[0]) if not risk_row.empty else None
+            anomalies.append(
+                AnomalyDetail(
+                    date=str(row.date),
+                    merchant=row.merchant,
+                    category=row.category,
+                    amount=float(row.amount),
+                    severity=row.severity,
+                    explanation=row.anomaly_explanation,
+                    anomaly_score=float(row.anomaly_score),
+                    merchant_risk_score=mrs,
+                )
             )
-            for row in recent.itertuples()
-        ]
 
         execution_time = (time.perf_counter() - start_time) * 1000
         return AnomalyReportResponse(
-            window_start=report['window_start'],
-            window_end=report['window_end'],
-            anomaly_count=report['anomaly_count'],
-            total_anomaly_amount=report['total_anomaly_amount'],
-            top_categories=report['top_categories'],
+            window_start=report["window_start"],
+            window_end=report["window_end"],
+            anomaly_count=report["anomaly_count"],
+            total_anomaly_amount=report["total_anomaly_amount"],
+            top_categories={str(k): int(v) for k, v in report["top_categories"].items()},
             anomalies=anomalies,
+            merchant_risk=risk_tbl.head(20).to_dict("records"),
             execution_time_ms=round(execution_time, 2),
-            timestamp=_now_iso()
+            timestamp=_now_iso(),
         )
     except Exception as exc:
-        logger.error("Anomaly report error: %s", exc)
+        logger.exception("Anomaly report error")
         raise HTTPException(status_code=500, detail=f"Anomaly report error: {exc}")
 
 
-@app.get("/anomalies/severity/{level}", response_model=AnomaliesResponse, tags=["Anomalies"], status_code=status.HTTP_200_OK)
+@app.get("/anomalies/severity/{level}", response_model=AnomaliesResponse, tags=["Anomalies"])
 def anomalies_by_severity(level: str):
-    """Returns anomalies filtered by severity level."""
     start_time = time.perf_counter()
-    level = level.upper()
+    normalized = level.strip().lower()
+    allowed = {"low", "medium", "high"}
+    if normalized not in allowed:
+        raise HTTPException(status_code=400, detail="Severity must be one of: low, medium, high")
 
-    if level not in {"LOW", "MEDIUM", "HIGH"}:
-        raise HTTPException(status_code=400, detail="Severity must be low, medium, or high")
+    level_upper = normalized.upper()
 
     try:
         df_results = _get_cached_anomalies()
-        filtered = df_results[(df_results['is_anomaly']) & (df_results['severity'] == level)]
+        filtered = df_results[(df_results["is_anomaly"]) & (df_results["severity"] == level_upper)]
 
         result = [
             {
@@ -640,141 +785,228 @@ def anomalies_by_severity(level: str):
             shown=len(result),
             anomalies=result,
             execution_time_ms=round(execution_time, 2),
-            timestamp=_now_iso()
+            timestamp=_now_iso(),
         )
+    except HTTPException:
+        raise
     except Exception as exc:
-        logger.error("Anomaly severity error: %s", exc)
+        logger.exception("Anomaly severity error")
         raise HTTPException(status_code=500, detail=f"Anomaly severity error: {exc}")
 
 
-@app.get("/forecast", response_model=ForecastAPIResponse, tags=["Forecast"], status_code=status.HTTP_200_OK)
-def forecast(category: Optional[str] = None, budget: Optional[str] = None):
-    """Returns 30-day forecast summaries, budget alerts, changepoints, and MAE metrics."""
+@app.get("/anomalies/trends", response_model=AnomalyTrendsResponse, tags=["Anomalies"])
+def anomalies_trends():
     start_time = time.perf_counter()
+    df_results = _get_cached_anomalies()
+    trend = anomaly_trend_analysis(df_results)
+    execution_time = (time.perf_counter() - start_time) * 1000
+    return AnomalyTrendsResponse(trend=trend, execution_time_ms=round(execution_time, 2), timestamp=_now_iso())
 
+
+@app.get("/forecast", response_model=ForecastAPIResponse, tags=["Forecast"])
+def forecast(
+    category: Optional[str] = None,
+    budget: Optional[str] = None,
+    monthly_income: Optional[float] = Query(None, description="Optional monthly income for savings projection."),
+):
+    start_time = time.perf_counter()
     try:
         df = _load_df()
-        categories = sorted(df['category'].unique())
+        categories = sorted(df["category"].unique())
         if category:
             if category not in categories:
                 raise HTTPException(status_code=404, detail="Category not found")
             categories = [category]
 
-        summaries = []
+        global_prior = float(df.groupby(df["date"].dt.date)["amount"].sum().mean())
+
+        summaries: list[dict[str, Any]] = []
+        all_changepoints: list[str] = []
+        recurring_all: list[dict[str, Any]] = []
+
         for cat in categories:
-            forecast_df, _ = forecast_spending(df, category=cat, days=30)
+            forecast_df, _ = forecast_spending(df, category=cat, days=30, global_prior_daily=global_prior)
             if forecast_df is None:
                 continue
             summaries.append(get_forecast_summary(forecast_df, cat))
+            all_changepoints.extend(forecast_df.attrs.get("changepoints", []))
+            recurring_all.extend(detect_recurring_charges(df, category=cat))
 
         summary_df = combine_forecast_summaries(summaries)
         budgets = _parse_budget_param(budget)
         budget_alerts_df = check_budget_alerts(summary_df, budgets)
-        budget_alerts = budget_alerts_df.to_dict('records') if not budget_alerts_df.empty else []
+        budget_alerts = budget_alerts_df.to_dict("records") if not budget_alerts_df.empty else []
 
-        alerts_set = {alert.get('category') for alert in budget_alerts}
-        forecasts = [
-            ForecastResponse(
-                category=item['category'],
-                total=float(item['total_predicted_spend']),
-                avg_daily=float(item['avg_daily_spend']),
-                max_day=float(item['max_daily_spend']),
-                budget_alert=item['category'] in alerts_set,
-                changepoints=item.get('changepoints', []),
-                mae=item.get('mae_7d'),
+        alerts_set = {str(a.get("category")) for a in budget_alerts}
+        budget_limit_map = {str(k): float(v) for k, v in budgets.items()}
+
+        forecasts: list[ForecastResponse] = []
+        for item in summary_df.to_dict("records"):
+            cat_name = item["category"]
+            forecasts.append(
+                ForecastResponse(
+                    category=cat_name,
+                    total_forecast=float(item["total_predicted_spend"]),
+                    avg_daily=float(item["avg_daily_spend"]),
+                    max_day=float(item["max_daily_spend"]),
+                    lower_bound=float(item.get("lower_bound", item.get("min_daily_spend", 0))),
+                    upper_bound=float(item.get("upper_bound", item.get("max_daily_spend", 0))),
+                    budget_alert=cat_name in alerts_set,
+                    budget_limit=budget_limit_map.get(cat_name),
+                    changepoints=list(item.get("changepoints", [])),
+                    mae=item.get("mae_7d"),
+                    rmse=item.get("rmse"),
+                    mape=item.get("mape"),
+                    recurring_charges=[r for r in recurring_all if r.get("category") == cat_name],
+                )
             )
-            for item in summary_df.to_dict('records')
-        ]
+
+        total_forecast_sum = sum(f.total_forecast for f in forecasts)
+        income = monthly_income if monthly_income is not None else float(os.getenv("FINSIGHT_MONTHLY_INCOME", "80000"))
+        savings = savings_projection(total_forecast_sum, income, horizon_days=30)
 
         execution_time = (time.perf_counter() - start_time) * 1000
         return ForecastAPIResponse(
             forecasts=forecasts,
             budget_alerts=budget_alerts,
+            changepoints=sorted(set(all_changepoints)),
+            recurring_charges=recurring_all,
+            savings_projection=savings,
             execution_time_ms=round(execution_time, 2),
-            timestamp=_now_iso()
+            timestamp=_now_iso(),
         )
     except HTTPException:
         raise
     except Exception as exc:
-        logger.error("Forecast error: %s", exc)
+        logger.exception("Forecast error")
         raise HTTPException(status_code=500, detail=f"Forecast error: {exc}")
 
 
-@app.get("/classifier/uncertain", response_model=ClassifierUncertainResponse, tags=["Classifier"], status_code=status.HTTP_200_OK)
-def classifier_uncertain():
-    """Returns transactions flagged as uncertain with top candidate categories."""
+@app.get("/forecast/whatif", response_model=WhatIfForecastResponse, tags=["Forecast"])
+def forecast_whatif(category: str, change_pct: float):
     start_time = time.perf_counter()
+    df = _load_df()
+    global_prior = float(df.groupby(df["date"].dt.date)["amount"].sum().mean())
+    forecast_df, _ = forecast_spending(df, category=category, days=30, global_prior_daily=global_prior)
+    if forecast_df is None:
+        raise HTTPException(status_code=404, detail="Unable to build forecast for category")
 
-    try:
-        df = _load_df()
-        if 'is_uncertain' in df.columns:
-            uncertain = df[df['is_uncertain'] == True]
-        else:
-            uncertain = df.iloc[0:0]
+    wi = what_if_forecast(forecast_df, change_pct, category_label=category)
+    execution_time = (time.perf_counter() - start_time) * 1000
+    return WhatIfForecastResponse(
+        category=category,
+        change_pct=change_pct,
+        adjusted_total_30d=float(wi["adjusted_total_30d"]),
+        savings_impact_vs_base=float(wi["savings_impact_vs_base"]),
+        execution_time_ms=round(execution_time, 2),
+        timestamp=_now_iso(),
+    )
 
-        results = []
-        for row in uncertain.itertuples():
-            candidates = _get_top_candidates(row.merchant)
-            results.append({
+
+@app.get("/classifier/uncertain", response_model=ClassifierUncertainResponse, tags=["Classifier"])
+def classifier_uncertain():
+    start_time = time.perf_counter()
+    df = _load_df()
+    conf_col = "confidence_score" if "confidence_score" in df.columns else None
+
+    def row_uncertain(row: Any) -> bool:
+        if "is_uncertain" in df.columns:
+            return bool(row.is_uncertain)
+        if conf_col:
+            return float(getattr(row, conf_col)) < 0.6
+        return False
+
+    uncertain_mask = df.apply(lambda r: row_uncertain(r), axis=1) if conf_col or "is_uncertain" in df.columns else pd.Series([False] * len(df))
+    uncertain = df[uncertain_mask]
+
+    results = []
+    for row in uncertain.itertuples():
+        verdict = normalize_input_for_classification(str(row.merchant))
+        kw_cat = None
+        for needle in sorted(MERCHANT_KEYWORD_MAP.keys(), key=len, reverse=True):
+            if needle in verdict:
+                kw_cat = MERCHANT_KEYWORD_MAP[needle]
+                break
+
+        candidates = _get_top_candidates(row.merchant)
+        conf_val = float(getattr(row, conf_col)) if conf_col else 0.0
+        pred_cat = getattr(row, "predicted_category", getattr(row, "category", ""))
+
+        results.append(
+            {
                 "date": str(row.date),
                 "merchant": row.merchant,
                 "amount": round(float(row.amount), 2),
-                "predicted_category": row.predicted_category,
-                "confidence_score": round(float(row.confidence_score), 4),
+                "predicted_category": pred_cat,
+                "confidence_score": round(conf_val, 4),
                 "top_candidates": candidates,
-            })
-
-        execution_time = (time.perf_counter() - start_time) * 1000
-        return ClassifierUncertainResponse(
-            total_uncertain=len(results),
-            transactions=results,
-            execution_time_ms=round(execution_time, 2),
-            timestamp=_now_iso()
+                "keyword_map_verdict": kw_cat,
+            }
         )
-    except Exception as exc:
-        logger.error("Uncertain classifier error: %s", exc)
-        raise HTTPException(status_code=500, detail=f"Uncertain classifier error: {exc}")
+
+    execution_time = (time.perf_counter() - start_time) * 1000
+    return ClassifierUncertainResponse(
+        total_uncertain=len(results),
+        transactions=results,
+        execution_time_ms=round(execution_time, 2),
+        timestamp=_now_iso(),
+    )
 
 
-@app.get("/classifier/stats", response_model=ClassifierStatsResponse, tags=["Classifier"], status_code=status.HTTP_200_OK)
+@app.get("/classifier/stats", response_model=ClassifierStatsResponse, tags=["Classifier"])
 def classifier_stats():
-    """Returns category spending statistics."""
     start_time = time.perf_counter()
+    df = _load_df()
+    cat_col = "predicted_category" if "predicted_category" in df.columns else "category"
+    stats = compute_category_spending_stats(df, category_column=cat_col)
 
+    from agents.classifier import spending_velocity
+
+    vel = spending_velocity(df, category_column=cat_col)
+
+    execution_time = (time.perf_counter() - start_time) * 1000
+    return ClassifierStatsResponse(
+        stats=stats.to_dict("records"),
+        velocity=vel.to_dict("records"),
+        execution_time_ms=round(execution_time, 2),
+        timestamp=_now_iso(),
+    )
+
+
+@app.post("/classifier/feedback", response_model=ClassifierFeedbackResponse, tags=["Classifier"])
+def classifier_feedback(body: ClassifierFeedbackRequest):
+    merchant = body.transaction_id
     try:
-        df = _load_df()
-        stats = compute_category_spending_stats(df)
-        execution_time = (time.perf_counter() - start_time) * 1000
-        return ClassifierStatsResponse(
-            stats=stats.to_dict('records'),
-            execution_time_ms=round(execution_time, 2),
-            timestamp=_now_iso()
-        )
-    except Exception as exc:
-        logger.error("Classifier stats error: %s", exc)
-        raise HTTPException(status_code=500, detail=f"Classifier stats error: {exc}")
+        df_lookup = _load_df()
+        idx = int(body.transaction_id)
+        if 0 <= idx < len(df_lookup):
+            merchant = str(df_lookup.iloc[idx]["merchant"])
+    except ValueError:
+        pass
+
+    fb = feedback_loop(correct_category=body.correct_category, merchant_name=str(merchant))
+    return ClassifierFeedbackResponse(
+        ok=True,
+        cache_size=int(fb.get("cache_size", 0)),
+        detail="Merchant cache updated.",
+    )
 
 
-@app.get("/insights", response_model=InsightsResponse, tags=["Insights"], status_code=status.HTTP_200_OK)
+@app.get("/insights", response_model=InsightsResponse, tags=["Insights"])
 def insights(budget: Optional[str] = None):
-    """Returns a premium dashboard payload across multiple agents."""
+    """Aggregate forecast, anomalies, classifier uncertainty, budgets, and peer benchmarks."""
     start_time = time.perf_counter()
-
     try:
         df = _load_df()
         df_anomalies = _get_cached_anomalies()
 
-        summary = {
+        spending_summary = {
             "total_transactions": int(len(df)),
-            "total_spend": round(float(df['amount'].sum()), 2),
-            "avg_transaction": round(float(df['amount'].mean()), 2),
+            "total_spend": round(float(df["amount"].sum()), 2),
+            "avg_transaction": round(float(df["amount"].mean()), 2),
         }
 
-        top_anomalies_df = (
-            df_anomalies[df_anomalies['is_anomaly'] == True]
-            .sort_values('anomaly_score', ascending=False)
-            .head(5)
-        )
+        top_anomalies_df = df_anomalies[df_anomalies["is_anomaly"]].sort_values("anomaly_score", ascending=False).head(5)
 
         top_anomalies = [
             AnomalyDetail(
@@ -789,10 +1021,13 @@ def insights(budget: Optional[str] = None):
             for row in top_anomalies_df.itertuples()
         ]
 
-        categories = sorted(df['category'].unique())
-        summaries = []
+        categories = sorted(df["category"].unique())
+        global_prior = float(df.groupby(df["date"].dt.date)["amount"].sum().mean())
+
+        summaries: list[dict[str, Any]] = []
+        recurring_all = detect_recurring_charges(df)
         for cat in categories:
-            forecast_df, _ = forecast_spending(df, category=cat, days=30)
+            forecast_df, _ = forecast_spending(df, category=cat, days=30, global_prior_daily=global_prior)
             if forecast_df is None:
                 continue
             summaries.append(get_forecast_summary(forecast_df, cat))
@@ -800,48 +1035,84 @@ def insights(budget: Optional[str] = None):
         summary_df = combine_forecast_summaries(summaries)
         budgets = _parse_budget_param(budget)
         budget_alerts_df = check_budget_alerts(summary_df, budgets)
-        budget_alerts = budget_alerts_df.to_dict('records') if not budget_alerts_df.empty else []
+        budget_warnings = budget_alerts_df.to_dict("records") if not budget_alerts_df.empty else []
 
-        alerts_set = {alert.get('category') for alert in budget_alerts}
-        forecast = [
-            ForecastResponse(
-                category=item['category'],
-                total=float(item['total_predicted_spend']),
-                avg_daily=float(item['avg_daily_spend']),
-                max_day=float(item['max_daily_spend']),
-                budget_alert=item['category'] in alerts_set,
-                changepoints=item.get('changepoints', []),
-                mae=item.get('mae_7d'),
+        alerts_set = {str(a.get("category")) for a in budget_warnings}
+        forecast_list: list[ForecastResponse] = []
+        for item in summary_df.to_dict("records"):
+            cname = item["category"]
+            forecast_list.append(
+                ForecastResponse(
+                    category=cname,
+                    total_forecast=float(item["total_predicted_spend"]),
+                    avg_daily=float(item["avg_daily_spend"]),
+                    max_day=float(item["max_daily_spend"]),
+                    lower_bound=float(item.get("lower_bound", 0)),
+                    upper_bound=float(item.get("upper_bound", 0)),
+                    budget_alert=cname in alerts_set,
+                    changepoints=list(item.get("changepoints", [])),
+                    mae=item.get("mae_7d"),
+                    rmse=item.get("rmse"),
+                    mape=item.get("mape"),
+                    recurring_charges=[r for r in recurring_all if r.get("category") == cname],
+                )
             )
-            for item in summary_df.to_dict('records')
-        ]
 
-        if 'is_uncertain' in df.columns:
-            uncertain = df[df['is_uncertain'] == True]
+        if "confidence_score" in df.columns and "is_uncertain" in df.columns:
+            uncertain = df[(df["confidence_score"] < 0.6) | df["is_uncertain"]]
+        elif "confidence_score" in df.columns:
+            uncertain = df[df["confidence_score"] < 0.6]
+        elif "is_uncertain" in df.columns:
+            uncertain = df[df["is_uncertain"]]
         else:
             uncertain = df.iloc[0:0]
 
-        uncertain_transactions = [
-            {
-                "date": str(row.date),
-                "merchant": row.merchant,
-                "amount": round(float(row.amount), 2),
-                "predicted_category": row.predicted_category,
-                "confidence_score": round(float(row.confidence_score), 4),
-            }
-            for row in uncertain.itertuples()
-        ]
+        uncertain_transactions = []
+        for row in uncertain.itertuples():
+            cs = float(getattr(row, "confidence_score", 0.0)) if hasattr(row, "confidence_score") else 0.0
+            uncertain_transactions.append(
+                {
+                    "date": str(row.date),
+                    "merchant": row.merchant,
+                    "amount": round(float(row.amount), 2),
+                    "predicted_category": getattr(row, "predicted_category", getattr(row, "category", "")),
+                    "confidence_score": round(cs, 4),
+                }
+            )
+
+        peer = peer_comparison(df)
+        income = float(os.getenv("FINSIGHT_MONTHLY_INCOME", "80000"))
+        savings = savings_projection(float(summary_df["total_predicted_spend"].sum()), income, horizon_days=30)
 
         execution_time = (time.perf_counter() - start_time) * 1000
         return InsightsResponse(
-            summary=summary,
+            spending_summary=spending_summary,
             top_anomalies=top_anomalies,
-            forecast=forecast,
+            forecast=forecast_list,
             uncertain_transactions=uncertain_transactions,
-            budget_alerts=budget_alerts,
+            budget_warnings=budget_warnings,
+            peer_comparison=peer,
+            recurring_charges=recurring_all,
+            savings_projection=savings,
+            generated_at=_now_iso(),
             execution_time_ms=round(execution_time, 2),
-            timestamp=_now_iso()
+            timestamp=_now_iso(),
         )
     except Exception as exc:
-        logger.error("Insights error: %s", exc)
+        logger.exception("Insights error")
         raise HTTPException(status_code=500, detail=f"Insights error: {exc}")
+
+
+@app.get("/insights/peer-comparison", response_model=PeerComparisonResponse, tags=["Insights"])
+def insights_peer():
+    start_time = time.perf_counter()
+    df = _load_df()
+    comparisons = peer_comparison(df)
+    execution_time = (time.perf_counter() - start_time) * 1000
+    return PeerComparisonResponse(
+        benchmark_currency="KES",
+        comparisons=comparisons,
+        execution_time_ms=round(execution_time, 2),
+        timestamp=_now_iso(),
+    )
+
