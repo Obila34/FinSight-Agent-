@@ -58,7 +58,8 @@ FINANCIAL_KEYWORDS = frozenset(
         "daily",
         "weekly",
         "monthly",
-    )
+    }
+)
 
 
 def setup_models() -> bool:
