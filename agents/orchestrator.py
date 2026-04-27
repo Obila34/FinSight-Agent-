@@ -52,7 +52,6 @@ _INTENT_PATTERNS: list[tuple[str, list[tuple[str, float]]]] = [
         "classify",
         [
             ("classify", 1.4),
-            ("category", 0.8),
             ("categorise", 1.2),
             ("categorize", 1.2),
             ("merchant category", 1.3),
@@ -70,6 +69,10 @@ _INTENT_PATTERNS: list[tuple[str, list[tuple[str, float]]]] = [
             ("average", 0.9),
             ("kes", 0.8),
             ("purchase", 0.8),
+            ("breakdown", 1.45),
+            ("categories", 1.15),
+            ("by category", 1.25),
+            ("total spending", 1.2),
         ],
     ),
 ]

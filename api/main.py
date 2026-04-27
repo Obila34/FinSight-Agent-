@@ -907,17 +907,15 @@ def forecast_whatif(category: str, change_pct: float):
 def classifier_uncertain():
     start_time = time.perf_counter()
     df = _load_df()
-    conf_col = "confidence_score" if "confidence_score" in df.columns else None
 
-    def row_uncertain(row: Any) -> bool:
-        if "is_uncertain" in df.columns:
-            return bool(row.is_uncertain)
-        if conf_col:
-            return float(getattr(row, conf_col)) < 0.6
-        return False
-
-    uncertain_mask = df.apply(lambda r: row_uncertain(r), axis=1) if conf_col or "is_uncertain" in df.columns else pd.Series([False] * len(df))
-    uncertain = df[uncertain_mask]
+    if "confidence_score" in df.columns and "is_uncertain" in df.columns:
+        uncertain = df[(df["confidence_score"] < 0.6) | df["is_uncertain"]]
+    elif "confidence_score" in df.columns:
+        uncertain = df[df["confidence_score"] < 0.6]
+    elif "is_uncertain" in df.columns:
+        uncertain = df[df["is_uncertain"]]
+    else:
+        uncertain = df.iloc[0:0]
 
     results = []
     for row in uncertain.itertuples():
@@ -929,7 +927,7 @@ def classifier_uncertain():
                 break
 
         candidates = _get_top_candidates(row.merchant)
-        conf_val = float(getattr(row, conf_col)) if conf_col else 0.0
+        conf_val = float(getattr(row, "confidence_score", 0.0)) if hasattr(row, "confidence_score") else 0.0
         pred_cat = getattr(row, "predicted_category", getattr(row, "category", ""))
 
         results.append(
@@ -1082,7 +1080,8 @@ def insights(budget: Optional[str] = None):
 
         peer = peer_comparison(df)
         income = float(os.getenv("FINSIGHT_MONTHLY_INCOME", "80000"))
-        savings = savings_projection(float(summary_df["total_predicted_spend"].sum()), income, horizon_days=30)
+        fc_total = float(summary_df["total_predicted_spend"].sum()) if not summary_df.empty else 0.0
+        savings = savings_projection(fc_total, income, horizon_days=30)
 
         execution_time = (time.perf_counter() - start_time) * 1000
         return InsightsResponse(
