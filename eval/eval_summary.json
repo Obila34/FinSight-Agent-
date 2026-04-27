@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-04-27T23:49:06.847214",
+  "total_tests": 20,
+  "passed": 0,
+  "failed": 20,
+  "overall_accuracy": 0.0,
+  "intent_accuracy": 0.0,
+  "avg_keyword_score": 0.0,
+  "avg_response_time_ms": 2034.31,
+  "p95_response_time_ms": 2048.29,
+  "by_category": {
+    "sum": {
+      "anomaly_detection": 0,
+      "category_breakdown": 0,
+      "comparison": 0,
+      "forecasting": 0,
+      "merchant_specific": 0,
+      "single_transaction": 0,
+      "spending_total": 0
+    },
+    "count": {
+      "anomaly_detection": 3,
+      "category_breakdown": 2,
+      "comparison": 2,
+      "forecasting": 3,
+      "merchant_specific": 2,
+      "single_transaction": 2,
+      "spending_total": 6
+    },
+    "accuracy": {
+      "anomaly_detection": 0.0,
+      "category_breakdown": 0.0,
+      "comparison": 0.0,
+      "forecasting": 0.0,
+      "merchant_specific": 0.0,
+      "single_transaction": 0.0,
+      "spending_total": 0.0
+    }
+  }
+}
