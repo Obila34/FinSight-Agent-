@@ -1,0 +1,13 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      [
+        "build",
+        "-f",
+        "Dockerfile.ui",
+        "-t",
+        "us-central1-docker.pkg.dev/build-with-ai-mama-ngina/finsight-repo/finsight-agent-ui:latest",
+        ".",
+      ]
+images:
+  - us-central1-docker.pkg.dev/build-with-ai-mama-ngina/finsight-repo/finsight-agent-ui:latest

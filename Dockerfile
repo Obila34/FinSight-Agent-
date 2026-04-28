@@ -5,22 +5,30 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
-ENV PORT=7860
+ENV PORT=8080
+ENV FINSIGHT_WARM_MODELS=false
 
-# Basic build tools needed by some scientific Python packages.
+# Build/runtime dependencies for scientific stack.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Install dependencies first for layer caching.
 COPY requirements.txt /app/requirements.txt
-RUN pip install --upgrade pip && pip install -r /app/requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --extra-index-url https://download.pytorch.org/whl/cpu -r /app/requirements.txt
 
+# App code.
 COPY . /app
 
-# Spaces expects the app to listen on 7860.
-EXPOSE 7860
+# Cloud Run injects PORT (default 8080).
+EXPOSE 8080
 
-# Run Streamlit UI in the Space.
-# Set FINSIGHT_API_URL in Space Variables/Secrets to your backend API URL.
-CMD ["python", "-m", "streamlit", "run", "ui/app.py", "--server.port=7860", "--server.address=0.0.0.0", "--server.headless=true"]
+# Container-level health check.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD curl -fsS "http://127.0.0.1:${PORT}/health" || exit 1
+
+# Bind to Cloud Run PORT at runtime.
+CMD ["sh", "-c", "exec uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8080}"]

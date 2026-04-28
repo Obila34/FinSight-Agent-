@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import logging
 import os
+import io
+import threading
 import time
 import uuid
 from datetime import datetime
@@ -9,7 +11,7 @@ from typing import Any, Literal, Optional, TYPE_CHECKING
 
 import pandas as pd
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response, status
+from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, Response, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -24,8 +26,10 @@ from agents.anomaly_detector import (
 from agents.classifier import (
     CATEGORIES,
     MERCHANT_KEYWORD_MAP,
+    classify_transaction,
     compute_category_spending_stats,
     feedback_loop,
+    keyword_fallback_classify,
     normalize_input_for_classification,
 )
 from agents.forecaster import (
@@ -38,6 +42,7 @@ from agents.forecaster import (
     what_if_forecast,
 )
 from agents.orchestrator import circuit_open
+from data.pipeline import clean_data
 
 if TYPE_CHECKING:
     from agents.rag_engine import FinanceRAGEngine
@@ -300,8 +305,46 @@ class HealthResponse(BaseModel):
     uptime_seconds: float
 
 
+class ReadyResponse(BaseModel):
+    status: str
+    models_loaded: bool
+    details: dict[str, bool]
+    timestamp: str
+
+
+class IngestAnalyzeResponse(BaseModel):
+    filename: str
+    total_rows: int
+    classified_rows: int
+    anomaly_count: int
+    categories: list[dict[str, Any]]
+    anomalies: list[dict[str, Any]]
+    records: list[dict[str, Any]]
+    execution_time_ms: float
+    timestamp: str
+
+
 def _now_iso() -> str:
     return datetime.now().isoformat()
+
+
+def _init_model_status() -> dict[str, bool]:
+    return {
+        "rag_engine": False,
+        "anomaly_cache": False,
+        "classifier_model": False,
+    }
+
+
+def _all_models_loaded() -> bool:
+    status_map = getattr(app.state, "model_status", _init_model_status())
+    return bool(status_map) and all(status_map.values())
+
+
+def _set_model_loaded(name: str, loaded: bool) -> None:
+    if not hasattr(app.state, "model_status"):
+        app.state.model_status = _init_model_status()
+    app.state.model_status[name] = bool(loaded)
 
 
 def _load_df() -> pd.DataFrame:
@@ -368,6 +411,8 @@ def _ensure_rag_engine():
         from agents.rag_engine import FinanceRAGEngine
 
         app.state.rag_engine = FinanceRAGEngine(data_path=CLASSIFIED_PATH)
+        _set_model_loaded("rag_engine", True)
+        logger.info("RAG engine loaded")
     return app.state.rag_engine
 
 
@@ -376,6 +421,8 @@ def _get_cached_anomalies() -> pd.DataFrame:
         df = _load_df()
         app.state.anomaly_cache = detect_anomalies(df)
         app.state.anomaly_cache_ts = time.time()
+        _set_model_loaded("anomaly_cache", True)
+        logger.info("Anomaly cache loaded")
     return app.state.anomaly_cache
 
 
@@ -395,6 +442,8 @@ def _get_top_candidates(merchant: str) -> list[dict[str, Any]]:
 
     try:
         clf_mod._ensure_classifier()
+        _set_model_loaded("classifier_model", True)
+        logger.info("Classifier model loaded")
         result = clf_mod.classifier(merchant, CATEGORIES)
     except Exception:
         logger.warning("Classifier model unavailable; returning empty top candidates.")
@@ -406,6 +455,29 @@ def _get_top_candidates(merchant: str) -> list[dict[str, Any]]:
     return candidates
 
 
+def _warm_models_background() -> None:
+    """Best-effort model warm-up running after server starts accepting traffic."""
+    logger.info("Background warm-up started")
+    try:
+        if os.path.exists(CLASSIFIED_PATH):
+            try:
+                _ensure_rag_engine()
+            except Exception as exc:
+                logger.warning("Background warm-up: RAG unavailable: %s", exc)
+
+            try:
+                _get_cached_anomalies()
+            except Exception as exc:
+                logger.warning("Background warm-up: anomaly cache unavailable: %s", exc)
+
+            try:
+                _get_top_candidates("uber")
+            except Exception as exc:
+                logger.warning("Background warm-up: classifier unavailable: %s", exc)
+    finally:
+        logger.info("Background warm-up finished; model_status=%s", getattr(app.state, "model_status", {}))
+
+
 def _validate_date(value: Optional[str]) -> None:
     if value is None:
         return
@@ -413,6 +485,44 @@ def _validate_date(value: Optional[str]) -> None:
         pd.to_datetime(value)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Invalid date format: {value}") from exc
+
+
+def _normalize_uploaded_transactions(df: pd.DataFrame) -> pd.DataFrame:
+    """Map common column names into expected schema: date, merchant, amount."""
+    col_map = {c.lower().strip(): c for c in df.columns}
+
+    def pick(*names: str) -> str | None:
+        for n in names:
+            if n in col_map:
+                return col_map[n]
+        return None
+
+    date_col = pick("date", "transaction_date", "posted_date")
+    merchant_col = pick("merchant", "description", "payee", "name")
+    amount_col = pick("amount", "value", "transaction_amount")
+
+    if not date_col or not merchant_col or not amount_col:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Uploaded file must include date/merchant/amount columns (or common aliases like "
+                "transaction_date, description, transaction_amount)."
+            ),
+        )
+
+    normalized = pd.DataFrame(
+        {
+            "date": df[date_col],
+            "merchant": df[merchant_col],
+            "amount": pd.to_numeric(df[amount_col], errors="coerce"),
+        }
+    )
+
+    if "category" in df.columns:
+        normalized["category"] = df["category"]
+
+    normalized = normalized.dropna(subset=["date", "merchant", "amount"])
+    return normalized
 
 
 def require_rag_available() -> None:
@@ -433,10 +543,14 @@ def require_rag_available() -> None:
 
 @app.on_event("startup")
 def startup_event() -> None:
-    """Warm caches, validate optional data files, and mark readiness."""
+    """Initialize quickly; heavy model loads are lazy/background for Cloud Run startup safety."""
     start = time.perf_counter()
     app.state.start_time = time.time()
-    app.state.is_ready = False
+    app.state.is_ready = True
+    app.state.model_status = _init_model_status()
+    app.state.rag_engine = None
+    app.state.anomaly_cache = None
+    app.state.classifier_stats_cache = None
 
     for path in [CLASSIFIED_PATH, CLEANED_PATH]:
         if not os.path.exists(path):
@@ -447,36 +561,11 @@ def startup_event() -> None:
 
         for agent in ("rag", "forecast", "anomaly", "classify"):
             reset_circuit(agent)
-
-        if os.path.exists(CLASSIFIED_PATH):
-            try:
-                from agents.rag_engine import FinanceRAGEngine
-
-                app.state.rag_engine = FinanceRAGEngine(data_path=CLASSIFIED_PATH)
-            except Exception as exc:
-                logger.warning("RAG engine unavailable at startup: %s", exc)
-                app.state.rag_engine = None
-            try:
-                if app.state.rag_engine is not None:
-                    app.state.rag_engine.warm("summary of spending")
-            except Exception as exc:
-                logger.warning("RAG warm-up warning: %s", exc)
-
-            df = _load_df()
-            app.state.anomaly_cache = detect_anomalies(df)
-            app.state.anomaly_cache_ts = time.time()
-
-            cat_col = "predicted_category" if "predicted_category" in df.columns else "category"
-            app.state.classifier_stats_cache = compute_category_spending_stats(df, category_column=cat_col)
-        else:
-            logger.warning("Classified transactions missing — caches empty.")
-            app.state.anomaly_cache = None
-            app.state.classifier_stats_cache = None
-
-        app.state.is_ready = True
     except Exception:
-        logger.exception("Startup encountered errors — API may be partially degraded.")
-        app.state.is_ready = False
+        logger.exception("Startup encountered errors while resetting circuit breakers.")
+
+    if os.getenv("FINSIGHT_WARM_MODELS", "false").strip().lower() == "true":
+        threading.Thread(target=_warm_models_background, daemon=True).start()
 
     elapsed_ms = (time.perf_counter() - start) * 1000
     logger.info("Startup finished in %.2f ms — is_ready=%s", elapsed_ms, app.state.is_ready)
@@ -502,9 +591,24 @@ def root():
 @app.get("/health", response_model=HealthResponse, tags=["System"], summary="Liveness and readiness")
 def health_check():
     uptime = max(0.0, time.time() - getattr(app.state, "start_time", time.time()))
-    ready = bool(getattr(app.state, "is_ready", False))
-    status_label = "healthy" if ready else "degraded"
-    return HealthResponse(status=status_label, is_ready=ready, uptime_seconds=round(uptime, 3))
+    return HealthResponse(status="healthy", is_ready=True, uptime_seconds=round(uptime, 3))
+
+
+@app.get("/ready", response_model=ReadyResponse, tags=["System"], summary="Readiness for heavy model features")
+def readiness_check():
+    details = dict(getattr(app.state, "model_status", _init_model_status()))
+    all_loaded = _all_models_loaded()
+    if not all_loaded:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "status": "warming",
+                "models_loaded": False,
+                "details": details,
+                "timestamp": _now_iso(),
+            },
+        )
+    return ReadyResponse(status="ready", models_loaded=True, details=details, timestamp=_now_iso())
 
 
 @app.post("/query", response_model=QueryResponse, tags=["Query"], status_code=status.HTTP_200_OK)
@@ -1146,4 +1250,65 @@ def insights_peer():
         execution_time_ms=round(execution_time, 2),
         timestamp=_now_iso(),
     )
+
+
+@app.post("/ingest/analyze", response_model=IngestAnalyzeResponse, tags=["Insights"])
+async def ingest_and_analyze(file: UploadFile = File(...)):
+    """Upload a transaction file and return categorized + anomaly-enriched analytics."""
+    start_time = time.perf_counter()
+    name = file.filename or "uploaded_file"
+    try:
+        raw = await file.read()
+        if not raw:
+            raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+        try:
+            source_df = pd.read_csv(io.BytesIO(raw))
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=f"Failed to parse CSV: {exc}") from exc
+
+        tx_df = _normalize_uploaded_transactions(source_df)
+        tx_df = clean_data(tx_df)
+        if tx_df.empty:
+            raise HTTPException(status_code=400, detail="No valid transactions found after cleaning.")
+
+        predicted = []
+        confidence = []
+        for row in tx_df.itertuples():
+            try:
+                result = classify_transaction(str(row.merchant))
+            except Exception:
+                result = keyword_fallback_classify(normalize_input_for_classification(str(row.merchant)))
+            predicted.append(result.get("category", "Other"))
+            confidence.append(float(result.get("confidence", 0.0)))
+
+        tx_df["predicted_category"] = predicted
+        tx_df["confidence_score"] = confidence
+        tx_df["category"] = tx_df["predicted_category"]
+
+        stats = compute_category_spending_stats(tx_df, category_column="predicted_category")
+        analyzed = detect_anomalies(tx_df)
+        anomalies = analyzed[analyzed["is_anomaly"]].sort_values("anomaly_score", ascending=False).head(30)
+
+        execution_time = (time.perf_counter() - start_time) * 1000
+        return IngestAnalyzeResponse(
+            filename=name,
+            total_rows=int(source_df.shape[0]),
+            classified_rows=int(tx_df.shape[0]),
+            anomaly_count=int(analyzed["is_anomaly"].sum()),
+            categories=stats.to_dict("records"),
+            anomalies=anomalies[
+                ["date", "merchant", "category", "amount", "severity", "anomaly_score", "anomaly_explanation"]
+            ].to_dict("records"),
+            records=tx_df[
+                ["date", "merchant", "amount", "predicted_category", "confidence_score"]
+            ].head(400).to_dict("records"),
+            execution_time_ms=round(execution_time, 2),
+            timestamp=_now_iso(),
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Ingest analyze error")
+        raise HTTPException(status_code=500, detail=f"Ingest analyze error: {exc}")
 
