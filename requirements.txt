@@ -24,7 +24,7 @@ langchain==0.1.9
 langchain-core==0.1.27
 langchain-openai==0.0.8
 langgraph==0.0.26
-langsmith==0.0.87
+langsmith==0.1.17
 
 # ---- LlamaIndex ----
 llama-index==0.10.12
