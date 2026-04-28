@@ -6,6 +6,7 @@ import os
 import re
 from collections import deque
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -24,6 +25,9 @@ except ImportError:
     MetadataFilters = None  # type: ignore[misc, assignment]
 
 logger = logging.getLogger(__name__)
+BASE_DIR = Path(__file__).resolve().parents[1]
+DEFAULT_CLASSIFIED_PATH = BASE_DIR / "data" / "classified_transactions.csv"
+DEFAULT_CHROMA_DIR = BASE_DIR / "data" / "chroma_db"
 
 load_dotenv()
 
@@ -100,7 +104,7 @@ def transactions_to_documents(df: pd.DataFrame) -> list:
     return documents
 
 
-def build_vector_store(documents: list, persist_dir: str = "./data/chroma_db") -> VectorStoreIndex:
+def build_vector_store(documents: list, persist_dir: str = str(DEFAULT_CHROMA_DIR)) -> VectorStoreIndex:
     chroma_client = chromadb.PersistentClient(path=persist_dir)
     chroma_collection = chroma_client.get_or_create_collection("transactions")
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
@@ -111,7 +115,7 @@ def build_vector_store(documents: list, persist_dir: str = "./data/chroma_db") -
     return index
 
 
-def load_vector_store(persist_dir: str = "./data/chroma_db") -> VectorStoreIndex:
+def load_vector_store(persist_dir: str = str(DEFAULT_CHROMA_DIR)) -> VectorStoreIndex:
     chroma_client = chromadb.PersistentClient(path=persist_dir)
     chroma_collection = chroma_client.get_or_create_collection("transactions")
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
@@ -272,7 +276,7 @@ def multi_hop_plan(question: str) -> list[str]:
 
 
 class FinanceRAGEngine:
-    def __init__(self, data_path: str, persist_dir: str = "./data/chroma_db"):
+    def __init__(self, data_path: str = str(DEFAULT_CLASSIFIED_PATH), persist_dir: str = str(DEFAULT_CHROMA_DIR)):
         self.openai_ready = setup_models()
         self.persist_dir = persist_dir
         self.data_path = data_path
@@ -293,6 +297,8 @@ class FinanceRAGEngine:
             logger.warning("RAG index skipped because OpenAI is not configured")
 
         self.df = pd.read_csv(data_path)
+        if "predicted_category" in self.df.columns and "category" not in self.df.columns:
+            self.df["category"] = self.df["predicted_category"]
         logger.info("FinanceRAGEngine ready")
 
     def warm(self, dummy_question: str = "total spending summary") -> None:
@@ -456,5 +462,5 @@ def answer_question(index: VectorStoreIndex | None, question: str, filters: dict
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s", force=True)
-    engine = FinanceRAGEngine(data_path="data/classified_transactions.csv")
+    engine = FinanceRAGEngine(data_path=str(DEFAULT_CLASSIFIED_PATH))
     print(engine.ask("How much did I spend on food in total?"))

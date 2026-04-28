@@ -29,13 +29,20 @@ CLASSIFIED_PATH = DATA_DIR / "classified_transactions.csv"
 FORECASTS_DIR = DATA_DIR / "forecasts"
 
 
+def _resolve_category_column(df: pd.DataFrame) -> str:
+    if "predicted_category" in df.columns:
+        return "predicted_category"
+    return "category"
+
+
 def ewma_daily_spend(series: pd.Series, alpha: float = 0.3) -> pd.Series:
     """Exponentially weighted moving average; recent observations weighted more heavily."""
     return series.ewm(alpha=alpha, adjust=False).mean()
 
 
 def prepare_time_series(df: pd.DataFrame, category: str, amount_col: str = "amount") -> pd.DataFrame:
-    category_df = df[df["category"] == category].copy()
+    category_col = _resolve_category_column(df)
+    category_df = df[df[category_col] == category].copy()
     category_df["date"] = pd.to_datetime(category_df["date"])
     daily_spend = category_df.groupby("date")[amount_col].sum().reset_index()
     daily_spend = daily_spend.rename(columns={"date": "ds", amount_col: "y"})
@@ -133,8 +140,9 @@ def detect_recurring_charges(
     """Find merchants with repeating amounts (~±tolerance_pct) on similar calendar days."""
     work = df.copy()
     work["date"] = pd.to_datetime(work["date"])
+    category_col = _resolve_category_column(work)
     if category:
-        work = work[work["category"] == category]
+        work = work[work[category_col] == category]
     recurring: list[dict[str, Any]] = []
     for merchant, g in work.groupby("merchant"):
         if len(g) < 3:
@@ -151,7 +159,7 @@ def detect_recurring_charges(
                     "merchant": merchant,
                     "approx_amount": round(mean_amt, 2),
                     "hits": int(mask.sum()),
-                    "category": str(g["category"].iloc[0]),
+                    "category": str(g[category_col].iloc[0]),
                 }
             )
     return recurring
@@ -355,6 +363,8 @@ def main() -> None:
 
     df = pd.read_csv(CLASSIFIED_PATH)
     df["date"] = pd.to_datetime(df["date"])
+    if "predicted_category" in df.columns:
+        df["category"] = df["predicted_category"].fillna(df.get("category"))
     FORECASTS_DIR.mkdir(parents=True, exist_ok=True)
 
     categories_to_forecast = ["Food", "Transport", "Entertainment", "Shopping"]

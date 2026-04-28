@@ -244,7 +244,7 @@ if __name__ == "__main__":
     print("="*50)
     
     for name, status, error in results:
-        icon = "✓" if status == "PASSED" else "✗"
+        icon = "[OK]" if status == "PASSED" else "[FAIL]"
         line = f"  {icon} {name}: {status}"
         if error:
             line += f" — {error}"

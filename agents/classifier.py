@@ -7,7 +7,10 @@ from collections import Counter
 from pathlib import Path
 
 import pandas as pd
-from transformers import pipeline
+try:
+    from transformers import pipeline
+except Exception:  # pragma: no cover - optional runtime dependency for API startup resilience
+    pipeline = None
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +23,8 @@ def _ensure_classifier():
     global classifier, _MODEL_LOADED
     if _MODEL_LOADED:
         return classifier
+    if pipeline is None:
+        raise RuntimeError("transformers is not installed. Install project requirements to enable classification.")
     logger.info("Loading zero-shot classification model... (first run may download ~1.6GB)")
     classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
     _MODEL_LOADED = True

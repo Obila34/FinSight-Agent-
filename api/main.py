@@ -5,7 +5,7 @@ import os
 import time
 import uuid
 from datetime import datetime
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, TYPE_CHECKING
 
 import pandas as pd
 from dotenv import load_dotenv
@@ -38,7 +38,9 @@ from agents.forecaster import (
     what_if_forecast,
 )
 from agents.orchestrator import circuit_open
-from agents.rag_engine import FinanceRAGEngine
+
+if TYPE_CHECKING:
+    from agents.rag_engine import FinanceRAGEngine
 
 load_dotenv()
 
@@ -305,6 +307,8 @@ def _now_iso() -> str:
 def _load_df() -> pd.DataFrame:
     df = pd.read_csv(CLASSIFIED_PATH)
     df["date"] = pd.to_datetime(df["date"])
+    if "predicted_category" in df.columns:
+        df["category"] = df["predicted_category"].fillna(df.get("category"))
     return df
 
 
@@ -318,6 +322,10 @@ def _messages_to_history(messages: list[ConversationMessage]) -> list[dict[str, 
             history.append({"query": last_user, "answer": msg.content, "metadata": {}})
             last_user = None
     return history
+
+
+def _category_col(df: pd.DataFrame) -> str:
+    return "predicted_category" if "predicted_category" in df.columns else "category"
 
 
 def _apply_history(messages: Optional[list[ConversationMessage]]) -> None:
@@ -355,8 +363,10 @@ def _parse_budget_param(budget: Optional[str]) -> dict[str, float]:
     return parsed
 
 
-def _ensure_rag_engine() -> FinanceRAGEngine:
+def _ensure_rag_engine():
     if not hasattr(app.state, "rag_engine") or app.state.rag_engine is None:
+        from agents.rag_engine import FinanceRAGEngine
+
         app.state.rag_engine = FinanceRAGEngine(data_path=CLASSIFIED_PATH)
     return app.state.rag_engine
 
@@ -383,8 +393,12 @@ def _get_top_candidates(merchant: str) -> list[dict[str, Any]]:
     if key in cache:
         return cache[key]
 
-    clf_mod._ensure_classifier()
-    result = clf_mod.classifier(merchant, CATEGORIES)
+    try:
+        clf_mod._ensure_classifier()
+        result = clf_mod.classifier(merchant, CATEGORIES)
+    except Exception:
+        logger.warning("Classifier model unavailable; returning empty top candidates.")
+        return []
     top_labels = result["labels"][:3]
     top_scores = result["scores"][:3]
     candidates = [{"category": label, "confidence": round(float(score), 4)} for label, score in zip(top_labels, top_scores)]
@@ -408,6 +422,13 @@ def require_rag_available() -> None:
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="RAG subsystem degraded (circuit breaker open). Please retry shortly.",
         )
+    try:
+        _ensure_rag_engine()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"RAG subsystem unavailable: {exc}",
+        ) from exc
 
 
 @app.on_event("startup")
@@ -428,9 +449,16 @@ def startup_event() -> None:
             reset_circuit(agent)
 
         if os.path.exists(CLASSIFIED_PATH):
-            app.state.rag_engine = FinanceRAGEngine(data_path=CLASSIFIED_PATH)
             try:
-                app.state.rag_engine.warm("summary of spending")
+                from agents.rag_engine import FinanceRAGEngine
+
+                app.state.rag_engine = FinanceRAGEngine(data_path=CLASSIFIED_PATH)
+            except Exception as exc:
+                logger.warning("RAG engine unavailable at startup: %s", exc)
+                app.state.rag_engine = None
+            try:
+                if app.state.rag_engine is not None:
+                    app.state.rag_engine.warm("summary of spending")
             except Exception as exc:
                 logger.warning("RAG warm-up warning: %s", exc)
 
@@ -617,7 +645,8 @@ def get_summary():
         df_anomalies = _get_cached_anomalies()
         anomaly_count = int(df_anomalies["is_anomaly"].sum())
 
-        top_category = df.groupby("category")["amount"].sum().idxmax()
+        cat_col = _category_col(df)
+        top_category = df.groupby(cat_col)["amount"].sum().idxmax()
         date_range = f"{df['date'].min().strftime('%d %b %Y')} to {df['date'].max().strftime('%d %b %Y')}"
 
         execution_time = (time.perf_counter() - start_time) * 1000
@@ -641,7 +670,8 @@ def get_categories():
     start_time = time.perf_counter()
     try:
         df = _load_df()
-        breakdown = df.groupby("category")["amount"].agg(["count", "sum", "mean"]).round(2).reset_index()
+        cat_col = _category_col(df)
+        breakdown = df.groupby(cat_col)["amount"].agg(["count", "sum", "mean"]).round(2).reset_index().rename(columns={cat_col: "category"})
 
         total_spend = df["amount"].sum()
         result = []
@@ -812,7 +842,8 @@ def forecast(
     start_time = time.perf_counter()
     try:
         df = _load_df()
-        categories = sorted(df["category"].unique())
+        cat_col = _category_col(df)
+        categories = sorted(df[cat_col].dropna().unique())
         if category:
             if category not in categories:
                 raise HTTPException(status_code=404, detail="Category not found")
@@ -1019,7 +1050,8 @@ def insights(budget: Optional[str] = None):
             for row in top_anomalies_df.itertuples()
         ]
 
-        categories = sorted(df["category"].unique())
+        cat_col = _category_col(df)
+        categories = sorted(df[cat_col].dropna().unique())
         global_prior = float(df.groupby(df["date"].dt.date)["amount"].sum().mean())
 
         summaries: list[dict[str, Any]] = []

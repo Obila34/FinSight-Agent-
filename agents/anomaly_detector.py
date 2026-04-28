@@ -15,8 +15,9 @@ from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import LabelEncoder
 
 logger = logging.getLogger(__name__)
+BASE_DIR = Path(__file__).resolve().parents[1]
 
-ANOMALY_RESULTS_PATH = Path("data/anomaly_results.csv")
+ANOMALY_RESULTS_PATH = BASE_DIR / "data" / "anomaly_results.csv"
 
 # KES monthly household benchmarks (illustrative peer comparison).
 PEER_BENCHMARKS_KES: dict[str, float] = {
@@ -25,6 +26,12 @@ PEER_BENCHMARKS_KES: dict[str, float] = {
     "Utilities": 6200.0,
     "Entertainment": 4500.0,
 }
+
+
+def _resolve_category_column(df: pd.DataFrame) -> str:
+    if "predicted_category" in df.columns:
+        return "predicted_category"
+    return "category"
 
 
 def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
@@ -36,7 +43,8 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     df["hour_bucket"] = 12  # placeholder when hour not available
 
     le = LabelEncoder()
-    df["category_encoded"] = le.fit_transform(df["category"])
+    category_col = _resolve_category_column(df)
+    df["category_encoded"] = le.fit_transform(df[category_col])
 
     df["merchant_freq_global"] = df["merchant"].map(df["merchant"].value_counts())
 
@@ -92,7 +100,8 @@ def detect_anomalies_by_category(df: pd.DataFrame) -> pd.DataFrame:
     df["is_anomaly_by_category"] = False
     df["category_anomaly_score"] = 0.0
 
-    for category, group in df.groupby("category"):
+    category_col = _resolve_category_column(df)
+    for category, group in df.groupby(category_col):
         if len(group) < 10:
             logger.warning(
                 "Skipping category-level anomaly detection for %s (only %s rows)",
@@ -209,7 +218,8 @@ def detect_anomalies(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _category_baselines(df: pd.DataFrame) -> pd.DataFrame:
-    return df.groupby("category")["amount"].agg(avg_amount="mean", median_amount="median", count="size").reset_index()
+    category_col = _resolve_category_column(df)
+    return df.groupby(category_col)["amount"].agg(avg_amount="mean", median_amount="median", count="size").reset_index().rename(columns={category_col: "category"})
 
 
 def add_anomaly_explanations(df: pd.DataFrame) -> pd.DataFrame:
@@ -335,8 +345,10 @@ def merchant_risk_score(df: pd.DataFrame) -> pd.DataFrame:
 
 def peer_comparison(df: pd.DataFrame, benchmarks: dict[str, float] | None = None) -> list[dict[str, Any]]:
     benchmarks = benchmarks or PEER_BENCHMARKS_KES
+    df = df.copy()
     df["date"] = pd.to_datetime(df["date"])
-    totals = df.groupby("category")["amount"].sum()
+    category_col = _resolve_category_column(df)
+    totals = df.groupby(category_col)["amount"].sum()
     out: list[dict[str, Any]] = []
     for cat, bench in benchmarks.items():
         spent = float(totals.get(cat, 0.0))
@@ -352,7 +364,10 @@ def peer_comparison(df: pd.DataFrame, benchmarks: dict[str, float] | None = None
 
 
 def plot_anomalies(df: pd.DataFrame, category: str | None = None, save_path: str | None = None) -> None:
-    plot_df = df[df["category"] == category].copy() if category else df.copy()
+    category_col = _resolve_category_column(df)
+    plot_df = df[df[category_col] == category].copy() if category else df.copy()
+    if category_col != "category":
+        plot_df["category"] = plot_df[category_col]
     title = f"Anomaly Detection — {category}" if category else "Anomaly Detection — All"
 
     normal = plot_df[plot_df["is_anomaly"] == False]
@@ -392,7 +407,9 @@ def _save_results(df: pd.DataFrame, output_path: Path = ANOMALY_RESULTS_PATH) ->
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s", force=True)
-    df = pd.read_csv("data/classified_transactions.csv")
+    df = pd.read_csv(BASE_DIR / "data" / "classified_transactions.csv")
+    if "predicted_category" in df.columns:
+        df["category"] = df["predicted_category"].fillna(df.get("category"))
 
     print("\n" + "=" * 40)
     print("STEP 1: Injected anomaly test")

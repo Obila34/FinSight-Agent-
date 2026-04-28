@@ -7,10 +7,15 @@ import os
 import re
 import time
 from collections import defaultdict, deque
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from langgraph.graph import END, StateGraph
+try:
+    from langgraph.graph import END, StateGraph
+except Exception:
+    END = "__END__"  # type: ignore[assignment]
+    StateGraph = None  # type: ignore[assignment]
 
 from agents.anomaly_detector import detect_anomalies, weekly_anomaly_report
 from agents.classifier import classify_transaction
@@ -21,6 +26,8 @@ from agents.forecaster import (
     check_budget_alerts,
 )
 logger = logging.getLogger(__name__)
+BASE_DIR = Path(__file__).resolve().parents[1]
+CLASSIFIED_PATH = BASE_DIR / "data" / "classified_transactions.csv"
 
 _INTENT_PATTERNS: list[tuple[str, list[tuple[str, float]]]] = [
     (
@@ -112,8 +119,10 @@ def circuit_open(agent: str) -> bool:
 def _load_classified_df() -> pd.DataFrame:
     global _CLASSIFIED_DF
     if _CLASSIFIED_DF is None:
-        _CLASSIFIED_DF = pd.read_csv("data/classified_transactions.csv")
+        _CLASSIFIED_DF = pd.read_csv(CLASSIFIED_PATH)
         _CLASSIFIED_DF["date"] = pd.to_datetime(_CLASSIFIED_DF["date"])
+        if "predicted_category" in _CLASSIFIED_DF.columns:
+            _CLASSIFIED_DF["category"] = _CLASSIFIED_DF["predicted_category"].fillna(_CLASSIFIED_DF.get("category"))
     return _CLASSIFIED_DF
 
 
@@ -122,7 +131,7 @@ def _get_rag_engine() -> Any:
     if _RAG_ENGINE is None:
         from agents.rag_engine import FinanceRAGEngine
 
-        _RAG_ENGINE = FinanceRAGEngine(data_path="data/classified_transactions.csv")
+        _RAG_ENGINE = FinanceRAGEngine(data_path=str(CLASSIFIED_PATH))
     return _RAG_ENGINE
 
 
@@ -241,14 +250,31 @@ def _run_classify_agent(query: str) -> dict[str, Any]:
 
 
 def _run_rag_agent(query: str) -> dict[str, Any]:
-    engine = _get_rag_engine()
-    result = engine.ask_with_summary(query)
-    return {
-        "answer": result["answer"],
-        "summary": result["summary"],
-        "citations": result["citations"],
-        "insights": result.get("insights", []),
-    }
+    try:
+        engine = _get_rag_engine()
+        result = engine.ask_with_summary(query)
+        return {
+            "answer": result["answer"],
+            "summary": result["summary"],
+            "citations": result["citations"],
+            "insights": result.get("insights", []),
+        }
+    except Exception as exc:
+        df = _load_classified_df()
+        total_spend = round(float(df["amount"].sum()), 2) if not df.empty else 0.0
+        avg_spend = round(float(df["amount"].mean()), 2) if not df.empty else 0.0
+        return {
+            "answer": (
+                "Retrieval is currently unavailable, but the finance dataset is loaded. "
+                f"Total tracked spend is KES {total_spend:,.2f} across {len(df)} transactions, "
+                f"with an average transaction of KES {avg_spend:,.2f}. "
+                f"Install the optional RAG dependencies to enable citation-backed answers. ({exc})"
+            ),
+            "summary": {"total_spend": total_spend, "avg_spend": avg_spend, "count": int(len(df))},
+            "citations": [],
+            "insights": [],
+            "degraded": True,
+        }
 
 
 def proactive_alert_payload() -> str | None:
@@ -398,7 +424,7 @@ def _compose_response(state: dict[str, Any]) -> dict[str, Any]:
         None,
     )
 
-    if quality < 0.6 and "rag" in state["responses"]:
+    if quality < 0.6 and "rag" in state["responses"] and not rag_blob.get("degraded"):
         logger.warning("Low answer quality %.3f — retrying RAG with tightened prompt.", quality)
         retry = _run_rag_agent(state["query"] + " Provide precise numerical totals referencing transactions.")
         state["responses"]["rag"] = retry
@@ -435,6 +461,17 @@ def _compose_response(state: dict[str, Any]) -> dict[str, Any]:
 
 
 def _build_graph():
+    if StateGraph is None:
+        class _FallbackGraph:
+            def invoke(self, state: dict[str, Any]) -> dict[str, Any]:
+                s = _route_intents(dict(state))
+                s = _run_agents(s)
+                s = _compose_response(s)
+                return s
+
+        logger.warning("langgraph unavailable; using fallback orchestrator pipeline.")
+        return _FallbackGraph()
+
     graph = StateGraph(dict)
     graph.add_node("route_intents", _route_intents)
     graph.add_node("run_agents", _run_agents)

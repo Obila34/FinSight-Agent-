@@ -1,8 +1,10 @@
 import pandas as pd
 import logging
+from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 logger = logging.getLogger(__name__)
+BASE_DIR = Path(__file__).resolve().parents[1]
 
 def load_data(file_path: str) -> pd.DataFrame:
    logger.info(f"Loading data from {file_path}")
@@ -49,7 +51,7 @@ def run_pipeline(input_path: str, output_path: str) -> pd.DataFrame:
 
 if __name__ == "__main__":
     df = run_pipeline(
-        input_path="data/transactions.csv",
-        output_path="data/cleaned_transactions.csv"
+        input_path=str(BASE_DIR / "data" / "transactions.csv"),
+        output_path=str(BASE_DIR / "data" / "cleaned_transactions.csv")
     )
     print(df.describe())
